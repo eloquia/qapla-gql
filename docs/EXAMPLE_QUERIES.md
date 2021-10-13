@@ -34,6 +34,8 @@ mutation createUser {
 }
 ```
 
+---
+
 ## Create Project 1
 
 ```graphql
@@ -77,6 +79,8 @@ mutation updateProject {
 }
 ```
 
+---
+
 ## Sign In
 
 ```graphql
@@ -85,6 +89,31 @@ mutation signIn {
     id
     firstName
     lastName
+  }
+}
+```
+
+---
+
+## Create Meeting
+
+```graphql
+mutation createMeeting {
+  createMeeting(input: {name: "Test Meeting", durationMinutes: 30, startTime: "2021-10-13T17:30:15+05:30"}) {
+    id
+  }
+}
+```
+
+## Get Meeting by ID
+
+```graphql
+query meetingById {
+  getMeetingById(id: "5577006791947779410") {
+    id
+    name
+    startTime
+    durationMinutes
   }
 }
 ```

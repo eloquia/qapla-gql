@@ -2,6 +2,10 @@
 #
 # https://gqlgen.com/getting-started/
 
+# # # # # # # # # # # # # # # # #
+#               User
+# # # # # # # # # # # # # # # # #
+
 type User {
   id: ID!
   firstName: String!
@@ -35,6 +39,10 @@ input UpdateUser {
   isActive: Boolean!
 }
 
+# # # # # # # # # # # # # # # # #
+#             Project
+# # # # # # # # # # # # # # # # #
+
 type Project {
   id: String!
   name: String!
@@ -62,22 +70,75 @@ input UpdateProject {
   description: String
 }
 
+# # # # # # # # # # # # # # # # #
+#             Meeting
+# # # # # # # # # # # # # # # # #
+
+type Meeting {
+  id: String!
+  name: String!
+  people: [User]
+  projects: [Project]
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+input NewMeeting {
+  name: String!
+  peopleIDs: [String]
+  projectIDs: [String]
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+# # # # # # # # # # # # # # # # #
+#             Queries
+# # # # # # # # # # # # # # # # #
+
 type Mutation {
+  # # #
+  # # # User
+  # # #
   createUser(email: String!, password: String!): User!
   updateUser(input: UpdateUser!): User!
+
+  # # #
+  # # # Project
+  # # #
   createProject(input: NewProject!): Project!
   updateProject(input: UpdateProject!): Project!
   assignUserToProject(userId: String!, projectId: String!): User!
+
+  # # #
+  # # # Authentication
+  # # #
   signIn(email: String!, password: String!): User!
+
+  # # #
+  # # # Meeting
+  # # #
+  createMeeting(input: NewMeeting!): Meeting!
 }
 
 type Query {
+  # # #
+  # # # User
+  # # #
   users: [User]!
-  userDetails(userID: String!): [UserDetails]!
+  userDetails: [UserDetails]!
   getUserById(id: String!): User!
+
+  # # #
+  # # # Project
+  # # #
   projects: [Project]!
   getProjectById(id: String!): Project!
   projectDetails(slug: String!): ProjectDetails!
+
+  # # #
+  # # # Meeting
+  # # #
+  getMeetingById(id: String!): Meeting!
 }
 
 scalar Time

@@ -51,6 +51,10 @@ func (r *mutationResolver) SignIn(ctx context.Context, email string, password st
 	return r.AuthService.SignIn(ctx, email, password)
 }
 
+func (r *mutationResolver) CreateMeeting(ctx context.Context, input model.NewMeeting) (*model.Meeting, error) {
+	return r.MeetingService.Create(ctx, input)
+}
+
 func (r *projectResolver) Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error) {
 	return r.ProjectService.GetProjectPersonnel(ctx, obj.ID)
 }
@@ -59,7 +63,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return r.UserService.GetAll()
 }
 
-func (r *queryResolver) UserDetails(ctx context.Context, userID string) ([]*model.UserDetails, error) {
+func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetails, error) {
 	return r.UserService.GetAllUserDetails(ctx)
 }
 
@@ -77,6 +81,10 @@ func (r *queryResolver) GetProjectByID(ctx context.Context, id string) (*model.P
 
 func (r *queryResolver) ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error) {
 	return r.ProjectService.GetProjectDetails(ctx, slug)
+}
+
+func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
+	return r.MeetingService.GetById(ctx, id)
 }
 
 func (r *userDetailsResolver) AssignedProjects(ctx context.Context, obj *model.UserDetails) ([]*model.Project, error) {

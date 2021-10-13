@@ -45,12 +45,15 @@ func main() {
 
 	usersMap := make(map[string]*model.User)
 	projectMap := make(map[string]*model.Project)
-	projectUser := make(map[string][]string)
+	projectUserMap := make(map[string][]string)
+	meetingMap := make(map[string]*model.Meeting)
+	meetingUserMap := make(map[string][]string)
+	meetingProjectMap := make(map[string][]string)
 
 	userServiceInmem := inmem.NewUserServiceInmem(
 		usersMap,
 		projectMap,
-		projectUser,
+		projectUserMap,
 	)
 
 	err := userServiceInmem.Initialize()
@@ -61,7 +64,7 @@ func main() {
 	projectServiceInmem := inmem.NewProjectServiceInmem(
 		usersMap,
 		projectMap,
-		projectUser,
+		projectUserMap,
 	)
 	err = projectServiceInmem.Initialize()
 	if err != nil {
@@ -71,6 +74,15 @@ func main() {
 	authServiceInmem := &inmem.AuthServiceInmem{
 		UserSevice: userServiceInmem,
 	}
+
+	meetingServiceInmem := inmem.NewMeetingServiceInmem(
+		meetingMap,
+		usersMap,
+		projectMap,
+		projectUserMap,
+		meetingUserMap,
+		meetingProjectMap,
+	)
 
 	/* - - - - - - - - -
 			Set up server
@@ -82,6 +94,7 @@ func main() {
 				UserService:    userServiceInmem,
 				ProjectService: projectServiceInmem,
 				AuthService:    authServiceInmem,
+				MeetingService: meetingServiceInmem,
 			}}))
 
 	srv.AddTransport(&transport.Websocket{
