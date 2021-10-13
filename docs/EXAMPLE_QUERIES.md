@@ -76,3 +76,15 @@ mutation updateProject {
   }
 }
 ```
+
+## Sign In
+
+```graphql
+mutation signIn {
+  signIn(email: "dale@eloquia.io", password: "ehh") {
+    id
+    firstName
+    lastName
+  }
+}
+```

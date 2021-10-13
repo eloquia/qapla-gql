@@ -6,58 +6,23 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math/rand"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 )
 
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	user := &model.User{
-		ID:          fmt.Sprintf("T%d", rand.Int()),
-		FirstName:   input.FirstName,
-		LastName:    input.LastName,
-		GoesBy:      input.GoesBy,
-		MiddleName:  input.MiddleName,
-		Email:       input.Email,
-		Gender:      input.Gender,
-		Ethnicity:   input.Ethnicity,
-		Position:    input.Position,
-		Institution: input.Institution,
-		IsActive:    input.IsActive,
-	}
-	proposedId := fmt.Sprintf("T%d", rand.Int())
-	// keep generating new IDs until a unique one is created
-	for {
-		if r.users[proposedId] != nil {
-			proposedId = fmt.Sprintf("T%d", rand.Int())
-		}
-	}
-	user.ID = proposedId
-	r.users[proposedId] = user
-	return user, nil
+func (r *mutationResolver) CreateUser(ctx context.Context, email string, password string) (*model.User, error) {
+	return r.UserService.CreateUser(ctx, &model.NewUser{
+		Email:    email,
+		Password: password,
+	})
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.UserService.UpdateUser(ctx, &input)
 }
 
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error) {
-	project := &model.Project{
-		ID:          fmt.Sprintf("T%d", rand.Int()),
-		Name:        input.Name,
-		Description: input.Description,
-	}
-	proposedId := fmt.Sprintf("T%d", rand.Int())
-	// keep generating new IDs until a unique one is created
-	for {
-		if r.projects[proposedId] != nil {
-			proposedId = fmt.Sprintf("T%d", rand.Int())
-		}
-	}
-	project.ID = proposedId
-	r.projects[proposedId] = project
-	return project, nil
+	return r.ProjectService.CreateProject(ctx, &input)
 }
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error) {
@@ -71,43 +36,66 @@ func (r *mutationResolver) UpdateProject(ctx context.Context, input model.Update
 	project := &model.Project{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: *input.Description,
+		Description: input.Description,
 	}
 	r.projects[input.ID] = project
 
 	return project, nil
 }
 
+func (r *mutationResolver) AssignUserToProject(ctx context.Context, userID string, projectID string) (*model.User, error) {
+	return r.ProjectService.AddUserToProject(ctx, userID, projectID)
+}
+
+func (r *mutationResolver) SignIn(ctx context.Context, email string, password string) (*model.User, error) {
+	return r.AuthService.SignIn(ctx, email, password)
+}
+
+func (r *projectResolver) Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error) {
+	return r.ProjectService.GetProjectPersonnel(ctx, obj.ID)
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	users := make([]*model.User, 0, len(r.users))
-	for _, value := range r.users {
-		users = append(users, value)
-	}
-	return users, nil
+	return r.UserService.GetAll()
+}
+
+func (r *queryResolver) UserDetails(ctx context.Context, userID string) ([]*model.UserDetails, error) {
+	return r.UserService.GetAllUserDetails(ctx)
+}
+
+func (r *queryResolver) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	return r.UserService.GetById(id)
 }
 
 func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) {
-	projects := make([]*model.Project, 0, len(r.projects))
-	for _, value := range r.projects {
-		projects = append(projects, value)
-	}
-	return projects, nil
+	return r.ProjectService.GetAll(ctx)
+}
+
+func (r *queryResolver) GetProjectByID(ctx context.Context, id string) (*model.Project, error) {
+	return r.ProjectService.GetById(ctx, id)
+}
+
+func (r *queryResolver) ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error) {
+	return r.ProjectService.GetProjectDetails(ctx, slug)
+}
+
+func (r *userDetailsResolver) AssignedProjects(ctx context.Context, obj *model.UserDetails) ([]*model.Project, error) {
+	return r.ProjectService.GetAssignedProjects(ctx, obj.ID)
 }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
+// Project returns generated.ProjectResolver implementation.
+func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+// UserDetails returns generated.UserDetailsResolver implementation.
+func (r *Resolver) UserDetails() generated.UserDetailsResolver { return &userDetailsResolver{r} }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type userDetailsResolver struct{ *Resolver }

@@ -6,27 +6,19 @@ type User {
   id: ID!
   firstName: String!
   lastName: String!
-  goesBy: String!
-  middleName: String!
+}
+
+type UserDetails {
+  id: ID!
+  firstName: String!
+  lastName: String!
   email: String!
-  gender: String!
-  ethnicity: String!
-  position: String!
-  institution: String!
-  isActive: Boolean!
+  assignedProjects: [Project]
 }
 
 input NewUser {
-  firstName: String!
-  lastName: String!
-  goesBy: String!
-  middleName: String!
   email: String!
-  gender: String!
-  ethnicity: String!
-  position: String!
-  institution: String!
-  isActive: Boolean!
+  password: String!
 }
 
 input UpdateUser {
@@ -47,8 +39,16 @@ type Project {
   id: String!
   name: String!
   description: String
+  personnel: [User!]!
   createdAt: Time
   updatedAt: Time
+}
+
+type ProjectDetails {
+  id: String!
+  name: String!
+  description: String
+  personnel: [User]
 }
 
 input NewProject {
@@ -63,15 +63,21 @@ input UpdateProject {
 }
 
 type Mutation {
-  createUser(input: NewUser!): User!
+  createUser(email: String!, password: String!): User!
   updateUser(input: UpdateUser!): User!
   createProject(input: NewProject!): Project!
   updateProject(input: UpdateProject!): Project!
+  assignUserToProject(userId: String!, projectId: String!): User!
+  signIn(email: String!, password: String!): User!
 }
 
 type Query {
   users: [User]!
+  userDetails(userID: String!): [UserDetails]!
+  getUserById(id: String!): User!
   projects: [Project]!
+  getProjectById(id: String!): Project!
+  projectDetails(slug: String!): ProjectDetails!
 }
 
 scalar Time
