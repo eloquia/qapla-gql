@@ -41,9 +41,9 @@ type UpdateUser struct {
 }
 
 type UserDetails struct {
-	ID        string     `json:"id"`
-	FirstName string     `json:"firstName"`
-	LastName  string     `json:"lastName"`
-	Email     string     `json:"email"`
-	Projects  []*Project `json:"projects"`
+	ID               string     `json:"id"`
+	FirstName        string     `json:"firstName"`
+	LastName         string     `json:"lastName"`
+	Email            string     `json:"email"`
+	AssignedProjects []*Project `json:"assignedProjects"`
 }

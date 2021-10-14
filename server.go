@@ -43,9 +43,12 @@ func main() {
 		3. Provide services to service
 	- - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	usersMap := make(map[string]*model.User)
-	projectMap := make(map[string]*model.Project)
+	usersMap := initializeUsers()
+	projectMap := initializeProjects()
 	projectUserMap := make(map[string][]string)
+	projectUser := make([]string, 1)
+	projectUser[0] = "1"
+	projectUserMap["1"] = projectUser
 	meetingMap := make(map[string]*model.Meeting)
 	meetingUserMap := make(map[string][]string)
 	meetingProjectMap := make(map[string][]string)
@@ -56,20 +59,11 @@ func main() {
 		projectUserMap,
 	)
 
-	err := userServiceInmem.Initialize()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	projectServiceInmem := inmem.NewProjectServiceInmem(
 		usersMap,
 		projectMap,
 		projectUserMap,
 	)
-	err = projectServiceInmem.Initialize()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	authServiceInmem := &inmem.AuthServiceInmem{
 		UserSevice: userServiceInmem,
@@ -113,4 +107,33 @@ func main() {
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
+}
+
+func initializeUsers() map[string]*model.User {
+	usersMap := make(map[string]*model.User)
+	usersMap["1"] = &model.User{
+		ID:         "1",
+		FirstName:  "Dale",
+		LastName:   "Chang",
+		GoesBy:     "Dale",
+		MiddleName: "",
+		Email:      "dale@eloquia.io",
+		Password:   "notagoodpassword",
+		Ethnicity:  "East Asian",
+		Position:   "Software Engineer",
+	}
+
+	return usersMap
+}
+
+func initializeProjects() map[string]*model.Project {
+	projectMap := make(map[string]*model.Project)
+	projectMap["1"] = &model.Project{
+		ID:          "1",
+		Name:        "Test Project",
+		Description: "Test project for testing purposes",
+		Slug:        "test-project",
+	}
+
+	return projectMap
 }

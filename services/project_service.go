@@ -6,7 +6,6 @@ import (
 )
 
 type ProjectService interface {
-	Initialize() error
 	CreateProject(ctx context.Context, input *model.NewProject) (*model.Project, error)
 	GetAll(ctx context.Context) ([]*model.Project, error)
 	GetById(ctx context.Context, id string) (*model.Project, error)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"qaplagql/graph/model"
 )
@@ -21,24 +20,6 @@ func NewUserServiceInmem(userMap map[string]*model.User, projectMap map[string]*
 		projects:    projectMap,
 		projectUser: projectUserMap,
 	}
-}
-
-func (userService *UserServiceInmem) Initialize() error {
-	log.Printf("[DEBUG] Adding users")
-	userService.users = map[string]*model.User{
-		"1": {
-			ID:         "1",
-			FirstName:  "Dale",
-			LastName:   "Chang",
-			GoesBy:     "Dale",
-			MiddleName: "",
-			Email:      "dale@eloquia.io",
-			Password:   "notagoodpassword",
-			Ethnicity:  "East Asian",
-			Position:   "Software Engineer",
-		},
-	}
-	return nil
 }
 
 func (userService *UserServiceInmem) CreateUser(ctx context.Context, input *model.NewUser) (*model.User, error) {
@@ -121,6 +102,26 @@ func (userService *UserServiceInmem) GetAllUserDetails(ctx context.Context) ([]*
 			LastName:  user.LastName,
 			Email:     user.Email,
 		}
+
+		// fetch projects associated with User
+		var assignedProjectIDs []string
+		for projectID, assignedUserIDs := range userService.projectUser {
+			// figure out if user is assigned to the project
+			for _, assignedUserID := range assignedUserIDs {
+				if assignedUserID == userDetail.ID {
+					assignedProjectIDs = append(assignedProjectIDs, projectID)
+				}
+			}
+		}
+
+		var assignedProjects []*model.Project
+		for _, pID := range assignedProjectIDs {
+			project := userService.projects[pID]
+
+			assignedProjects = append(assignedProjects, project)
+		}
+
+		userDetail.AssignedProjects = assignedProjects
 
 		userDetails = append(userDetails, userDetail)
 	}

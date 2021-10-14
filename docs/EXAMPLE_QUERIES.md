@@ -36,6 +36,24 @@ mutation createUser {
 
 ---
 
+## User Details
+
+```graphql
+query findUserListItems {
+  userDetails {
+    id
+    firstName
+    lastName
+    assignedProjects {
+      id
+      name
+    }
+  }
+}
+```
+
+---
+
 ## Create Project 1
 
 ```graphql

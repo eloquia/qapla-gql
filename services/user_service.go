@@ -6,7 +6,6 @@ import (
 )
 
 type UserService interface {
-	Initialize() error
 	CreateUser(ctx context.Context, input *model.NewUser) (*model.User, error)
 	GetAll() ([]*model.User, error)
 	GetById(id string) (*model.User, error)

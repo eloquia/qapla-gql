@@ -6,27 +6,6 @@ import (
 	"testing"
 )
 
-func TestInitialize(t *testing.T) {
-	// Setup
-	userMap := make(map[string]*model.User)
-	projectMap := make(map[string]*model.Project)
-	projectUserMap := make(map[string][]string)
-	userService := &UserServiceInmem{
-		users:       userMap,
-		projects:    projectMap,
-		projectUser: projectUserMap,
-	}
-
-	// Test
-	err := userService.Initialize()
-
-	// Assert
-	if err != nil {
-		t.Log("Error should be nil", err)
-		t.Fail()
-	}
-}
-
 func TestCreateUser(t *testing.T) {
 	// Setup
 	userMap := make(map[string]*model.User)
@@ -73,10 +52,9 @@ func TestGetAllUsers(t *testing.T) {
 		projects:    projectMap,
 		projectUser: projectUserMap,
 	}
-	userService.Initialize()
 
 	// Test
-	users, err := userService.GetAll()
+	_, err := userService.GetAll()
 
 	// Assert
 	if err != nil {
@@ -84,8 +62,4 @@ func TestGetAllUsers(t *testing.T) {
 		t.Fail()
 	}
 
-	if len(users) < 1 {
-		t.Log("Expected User Map to be initialized with a user")
-		t.Fail()
-	}
 }

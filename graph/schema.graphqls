@@ -125,7 +125,7 @@ type Query {
   # # # User
   # # #
   users: [User]!
-  userDetails: [UserDetails]!
+  userDetails: [UserDetails]
   getUserById(id: String!): User!
 
   # # #

@@ -21,20 +21,6 @@ func NewProjectServiceInmem(userMap map[string]*model.User, projectMap map[strin
 	}
 }
 
-func (projectService *ProjectServiceInmem) Initialize() error {
-	log.Printf("[DEBUG] Adding projects")
-	projectService.projects = map[string]*model.Project{
-		"1": {
-			ID:          "1",
-			Name:        "Test Project",
-			Description: "Test project for testing purposes",
-			Slug:        "test-project",
-		},
-	}
-
-	return nil
-}
-
 func (projectService *ProjectServiceInmem) CreateProject(ctx context.Context, input *model.NewProject) (*model.Project, error) {
 	var foundProject *model.Project
 	for id, project := range projectService.projects {
@@ -154,8 +140,16 @@ func (p *ProjectServiceInmem) GetAssignedProjects(ctx context.Context, userID st
 		return assignedProjects, errors.New("User ID must be defined")
 	}
 
+	log.Printf("UserID: %+v", userID)
+	log.Printf("Projects: %+v", p.projects)
+
 	// see if user exists in database
 	foundUser := p.users[userID]
+	log.Printf("Num Users: %+v", len(p.users))
+
+	for k, v := range p.users {
+		log.Printf("k: %+v; v: %+v", k, v)
+	}
 
 	if foundUser == nil {
 		return assignedProjects, errors.New("User with ID not found in the database")
