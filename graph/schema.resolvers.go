@@ -71,8 +71,8 @@ func (r *queryResolver) GetUserByID(ctx context.Context, id string) (*model.User
 	return r.UserService.GetById(id)
 }
 
-func (r *queryResolver) Projects(ctx context.Context) ([]*model.Project, error) {
-	return r.ProjectService.GetAll(ctx)
+func (r *queryResolver) ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error) {
+	return r.ProjectService.GetProjectListItems(ctx)
 }
 
 func (r *queryResolver) GetProjectByID(ctx context.Context, id string) (*model.Project, error) {
@@ -87,10 +87,6 @@ func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.M
 	return r.MeetingService.GetById(ctx, id)
 }
 
-func (r *userDetailsResolver) AssignedProjects(ctx context.Context, obj *model.UserDetails) ([]*model.Project, error) {
-	return r.ProjectService.GetAssignedProjects(ctx, obj.ID)
-}
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -100,10 +96,6 @@ func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// UserDetails returns generated.UserDetailsResolver implementation.
-func (r *Resolver) UserDetails() generated.UserDetailsResolver { return &userDetailsResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type userDetailsResolver struct{ *Resolver }

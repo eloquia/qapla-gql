@@ -27,4 +27,5 @@ type ProjectDetails struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Personnel   []*User `json:"personnel"`
+	Slug        string  `json:"slug"`
 }

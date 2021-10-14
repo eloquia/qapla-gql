@@ -57,6 +57,14 @@ type ProjectDetails {
   name: String!
   description: String
   personnel: [User]
+  slug: String!
+}
+
+type ProjectListItem {
+  id: String!
+  name: String!
+  slug: String!
+  personnel: [User]
 }
 
 input NewProject {
@@ -131,7 +139,7 @@ type Query {
   # # #
   # # # Project
   # # #
-  projects: [Project]!
+  projectListItems: [ProjectListItem]!
   getProjectById(id: String!): Project!
   projectDetails(slug: String!): ProjectDetails!
 

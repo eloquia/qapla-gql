@@ -35,10 +35,27 @@ func (projectService *ProjectServiceInmem) CreateProject(ctx context.Context, in
 	return foundProject, nil
 }
 
-func (projectService *ProjectServiceInmem) GetAll(ctx context.Context) ([]*model.Project, error) {
-	var projects []*model.Project
+func (projectService *ProjectServiceInmem) GetAll(ctx context.Context) ([]*model.ProjectDetails, error) {
+	var projects []*model.ProjectDetails
 	for _, project := range projectService.projects {
-		projects = append(projects, project)
+		projectDetail := &model.ProjectDetails{
+			ID:          project.ID,
+			Name:        project.Name,
+			Description: &project.Description,
+			Slug:        project.Slug,
+		}
+
+		// get personnel for each project
+		var projectPersonnel []*model.User
+		projectPersonnelIDs := projectService.projectUser[projectDetail.ID]
+		for _, uID := range projectPersonnelIDs {
+			user := projectService.users[uID]
+			projectPersonnel = append(projectPersonnel, user)
+		}
+
+		projectDetail.Personnel = projectPersonnel
+
+		projects = append(projects, projectDetail)
 	}
 	return projects, nil
 }
@@ -71,7 +88,7 @@ func (projectService *ProjectServiceInmem) GetProjectDetails(ctx context.Context
 		ID:          foundProject.ID,
 		Name:        foundProject.Name,
 		Description: &foundProject.Description,
-		// Personnel: ,
+		Slug:        foundProject.Slug,
 	}
 	return projectDetails, nil
 }
@@ -157,4 +174,28 @@ func (p *ProjectServiceInmem) GetAssignedProjects(ctx context.Context, userID st
 	}
 
 	return assignedProjects, nil
+}
+
+func (p *ProjectServiceInmem) GetProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error) {
+	var projects []*model.ProjectListItem
+	for _, project := range p.projects {
+		projectListItem := &model.ProjectListItem{
+			ID:   project.ID,
+			Name: project.Name,
+			Slug: project.Slug,
+		}
+
+		// get personnel for each project
+		var projectPersonnel []*model.User
+		projectPersonnelIDs := p.projectUser[projectListItem.ID]
+		for _, uID := range projectPersonnelIDs {
+			user := p.users[uID]
+			projectPersonnel = append(projectPersonnel, user)
+		}
+
+		projectListItem.Personnel = projectPersonnel
+
+		projects = append(projects, projectListItem)
+	}
+	return projects, nil
 }

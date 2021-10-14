@@ -22,3 +22,10 @@ type NewMeeting struct {
 	StartTime       time.Time `json:"startTime"`
 	DurationMinutes int       `json:"durationMinutes"`
 }
+
+type ProjectListItem struct {
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Slug      string  `json:"slug"`
+	Personnel []*User `json:"personnel"`
+}

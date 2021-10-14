@@ -39,7 +39,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Project() ProjectResolver
 	Query() QueryResolver
-	UserDetails() UserDetailsResolver
 }
 
 type DirectiveRoot struct {
@@ -79,16 +78,24 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Personnel   func(childComplexity int) int
+		Slug        func(childComplexity int) int
+	}
+
+	ProjectListItem struct {
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Personnel func(childComplexity int) int
+		Slug      func(childComplexity int) int
 	}
 
 	Query struct {
-		GetMeetingByID func(childComplexity int, id string) int
-		GetProjectByID func(childComplexity int, id string) int
-		GetUserByID    func(childComplexity int, id string) int
-		ProjectDetails func(childComplexity int, slug string) int
-		Projects       func(childComplexity int) int
-		UserDetails    func(childComplexity int) int
-		Users          func(childComplexity int) int
+		GetMeetingByID   func(childComplexity int, id string) int
+		GetProjectByID   func(childComplexity int, id string) int
+		GetUserByID      func(childComplexity int, id string) int
+		ProjectDetails   func(childComplexity int, slug string) int
+		ProjectListItems func(childComplexity int) int
+		UserDetails      func(childComplexity int) int
+		Users            func(childComplexity int) int
 	}
 
 	User struct {
@@ -122,13 +129,10 @@ type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	UserDetails(ctx context.Context) ([]*model.UserDetails, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
-	Projects(ctx context.Context) ([]*model.Project, error)
+	ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
 	GetProjectByID(ctx context.Context, id string) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
 	GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error)
-}
-type UserDetailsResolver interface {
-	AssignedProjects(ctx context.Context, obj *model.UserDetails) ([]*model.Project, error)
 }
 
 type executableSchema struct {
@@ -342,6 +346,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProjectDetails.Personnel(childComplexity), true
 
+	case "ProjectDetails.slug":
+		if e.complexity.ProjectDetails.Slug == nil {
+			break
+		}
+
+		return e.complexity.ProjectDetails.Slug(childComplexity), true
+
+	case "ProjectListItem.id":
+		if e.complexity.ProjectListItem.ID == nil {
+			break
+		}
+
+		return e.complexity.ProjectListItem.ID(childComplexity), true
+
+	case "ProjectListItem.name":
+		if e.complexity.ProjectListItem.Name == nil {
+			break
+		}
+
+		return e.complexity.ProjectListItem.Name(childComplexity), true
+
+	case "ProjectListItem.personnel":
+		if e.complexity.ProjectListItem.Personnel == nil {
+			break
+		}
+
+		return e.complexity.ProjectListItem.Personnel(childComplexity), true
+
+	case "ProjectListItem.slug":
+		if e.complexity.ProjectListItem.Slug == nil {
+			break
+		}
+
+		return e.complexity.ProjectListItem.Slug(childComplexity), true
+
 	case "Query.getMeetingById":
 		if e.complexity.Query.GetMeetingByID == nil {
 			break
@@ -390,12 +429,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProjectDetails(childComplexity, args["slug"].(string)), true
 
-	case "Query.projects":
-		if e.complexity.Query.Projects == nil {
+	case "Query.projectListItems":
+		if e.complexity.Query.ProjectListItems == nil {
 			break
 		}
 
-		return e.complexity.Query.Projects(childComplexity), true
+		return e.complexity.Query.ProjectListItems(childComplexity), true
 
 	case "Query.userDetails":
 		if e.complexity.Query.UserDetails == nil {
@@ -590,6 +629,14 @@ type ProjectDetails {
   name: String!
   description: String
   personnel: [User]
+  slug: String!
+}
+
+type ProjectListItem {
+  id: String!
+  name: String!
+  slug: String!
+  personnel: [User]
 }
 
 input NewProject {
@@ -658,13 +705,13 @@ type Query {
   # # # User
   # # #
   users: [User]!
-  userDetails: [UserDetails]!
+  userDetails: [UserDetails]
   getUserById(id: String!): User!
 
   # # #
   # # # Project
   # # #
-  projects: [Project]!
+  projectListItems: [ProjectListItem]!
   getProjectById(id: String!): Project!
   projectDetails(slug: String!): ProjectDetails!
 
@@ -1761,6 +1808,178 @@ func (ec *executionContext) _ProjectDetails_personnel(ctx context.Context, field
 	return ec.marshalOUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ProjectDetails_slug(ctx context.Context, field graphql.CollectedField, obj *model.ProjectDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectListItem_id(ctx context.Context, field graphql.CollectedField, obj *model.ProjectListItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectListItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectListItem_name(ctx context.Context, field graphql.CollectedField, obj *model.ProjectListItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectListItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectListItem_slug(ctx context.Context, field graphql.CollectedField, obj *model.ProjectListItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectListItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ProjectListItem_personnel(ctx context.Context, field graphql.CollectedField, obj *model.ProjectListItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ProjectListItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Personnel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1821,14 +2040,11 @@ func (ec *executionContext) _Query_userDetails(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.UserDetails)
 	fc.Result = res
-	return ec.marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+	return ec.marshalOUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1873,7 +2089,7 @@ func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphq
 	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_projects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_projectListItems(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1891,7 +2107,7 @@ func (ec *executionContext) _Query_projects(ctx context.Context, field graphql.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Projects(rctx)
+		return ec.resolvers.Query().ProjectListItems(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1903,9 +2119,9 @@ func (ec *executionContext) _Query_projects(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Project)
+	res := resTmp.([]*model.ProjectListItem)
 	fc.Result = res
-	return ec.marshalNProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProjectListItem2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProjectListItem(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getProjectById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2361,14 +2577,14 @@ func (ec *executionContext) _UserDetails_assignedProjects(ctx context.Context, f
 		Object:     "UserDetails",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.UserDetails().AssignedProjects(rctx, obj)
+		return obj.AssignedProjects, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3955,6 +4171,50 @@ func (ec *executionContext) _ProjectDetails(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._ProjectDetails_description(ctx, field, obj)
 		case "personnel":
 			out.Values[i] = ec._ProjectDetails_personnel(ctx, field, obj)
+		case "slug":
+			out.Values[i] = ec._ProjectDetails_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var projectListItemImplementors = []string{"ProjectListItem"}
+
+func (ec *executionContext) _ProjectListItem(ctx context.Context, sel ast.SelectionSet, obj *model.ProjectListItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, projectListItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProjectListItem")
+		case "id":
+			out.Values[i] = ec._ProjectListItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._ProjectListItem_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._ProjectListItem_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "personnel":
+			out.Values[i] = ec._ProjectListItem_personnel(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4004,9 +4264,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userDetails(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "getUserById":
@@ -4023,7 +4280,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "projects":
+		case "projectListItems":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4031,7 +4288,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_projects(ctx, field)
+				res = ec._Query_projectListItems(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4145,34 +4402,25 @@ func (ec *executionContext) _UserDetails(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._UserDetails_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "firstName":
 			out.Values[i] = ec._UserDetails_firstName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "lastName":
 			out.Values[i] = ec._UserDetails_lastName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "email":
 			out.Values[i] = ec._UserDetails_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "assignedProjects":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._UserDetails_assignedProjects(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._UserDetails_assignedProjects(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4507,7 +4755,31 @@ func (ec *executionContext) marshalNProject2qaplagqlᚋgraphᚋmodelᚐProject(c
 	return ec._Project(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Project(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProjectDetails2qaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v model.ProjectDetails) graphql.Marshaler {
+	return ec._ProjectDetails(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v *model.ProjectDetails) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._ProjectDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProjectListItem2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProjectListItem(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectListItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4531,7 +4803,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐPro
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOProject2ᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalOProjectListItem2ᚖqaplagqlᚋgraphᚋmodelᚐProjectListItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4543,30 +4815,6 @@ func (ec *executionContext) marshalNProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐPro
 	wg.Wait()
 
 	return ret
-}
-
-func (ec *executionContext) marshalNProject2ᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Project(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProjectDetails2qaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v model.ProjectDetails) graphql.Marshaler {
-	return ec._ProjectDetails(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v *model.ProjectDetails) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ProjectDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -4703,44 +4951,6 @@ func (ec *executionContext) marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx 
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetails) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -5072,6 +5282,13 @@ func (ec *executionContext) marshalOProject2ᚖqaplagqlᚋgraphᚋmodelᚐProjec
 	return ec._Project(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOProjectListItem2ᚖqaplagqlᚋgraphᚋmodelᚐProjectListItem(ctx context.Context, sel ast.SelectionSet, v *model.ProjectListItem) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProjectListItem(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5187,6 +5404,47 @@ func (ec *executionContext) marshalOUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx 
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetails) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
