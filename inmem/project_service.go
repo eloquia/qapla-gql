@@ -3,7 +3,6 @@ package inmem
 import (
 	"context"
 	"errors"
-	"log"
 	"qaplagql/graph/model"
 )
 
@@ -140,16 +139,8 @@ func (p *ProjectServiceInmem) GetAssignedProjects(ctx context.Context, userID st
 		return assignedProjects, errors.New("User ID must be defined")
 	}
 
-	log.Printf("UserID: %+v", userID)
-	log.Printf("Projects: %+v", p.projects)
-
 	// see if user exists in database
 	foundUser := p.users[userID]
-	log.Printf("Num Users: %+v", len(p.users))
-
-	for k, v := range p.users {
-		log.Printf("k: %+v; v: %+v", k, v)
-	}
 
 	if foundUser == nil {
 		return assignedProjects, errors.New("User with ID not found in the database")
