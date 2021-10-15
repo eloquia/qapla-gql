@@ -3,7 +3,10 @@ package inmem
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/rand"
 	"qaplagql/graph/model"
+	"strings"
 )
 
 type ProjectServiceInmem struct {
@@ -21,18 +24,28 @@ func NewProjectServiceInmem(userMap map[string]*model.User, projectMap map[strin
 }
 
 func (projectService *ProjectServiceInmem) CreateProject(ctx context.Context, input *model.NewProject) (*model.Project, error) {
-	var foundProject *model.Project
+	var sameNameProject *model.Project
 	for id, project := range projectService.projects {
 		if project.Name == input.Name {
-			foundProject = projectService.projects[id]
+			sameNameProject = projectService.projects[id]
 		}
 	}
 
-	if foundProject != nil {
+	if sameNameProject != nil {
 		return &model.Project{}, errors.New("Project with name already exists")
 	}
 
-	return foundProject, nil
+	projectID := fmt.Sprintf("%+v", rand.Int())
+	newProject := &model.Project{
+		ID:          projectID,
+		Name:        input.Name,
+		Description: input.Description,
+		Slug:        kebabify(input.Name),
+	}
+
+	projectService.projects[projectID] = newProject
+
+	return newProject, nil
 }
 
 func (projectService *ProjectServiceInmem) GetAll(ctx context.Context) ([]*model.ProjectDetails, error) {
@@ -198,4 +211,10 @@ func (p *ProjectServiceInmem) GetProjectListItems(ctx context.Context) ([]*model
 		projects = append(projects, projectListItem)
 	}
 	return projects, nil
+}
+
+func kebabify(input string) string {
+	hyphens := strings.ReplaceAll(input, " ", "-")
+	lowercase := strings.ToLower(hyphens)
+	return lowercase
 }
