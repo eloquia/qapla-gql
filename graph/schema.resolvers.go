@@ -17,6 +17,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, email string, passwor
 	})
 }
 
+func (r *mutationResolver) CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error) {
+	return r.UserService.AddPersonnel(ctx, input)
+}
+
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
 	return r.UserService.UpdateUser(ctx, &input)
 }

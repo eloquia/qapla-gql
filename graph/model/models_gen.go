@@ -23,6 +23,18 @@ type NewMeeting struct {
 	DurationMinutes int       `json:"durationMinutes"`
 }
 
+type NewPersonnel struct {
+	FirstName   string  `json:"firstName"`
+	LastName    string  `json:"lastName"`
+	GoesBy      *string `json:"goesBy"`
+	MiddleName  *string `json:"middleName"`
+	Email       string  `json:"email"`
+	Gender      *string `json:"gender"`
+	Ethnicity   *string `json:"ethnicity"`
+	Position    *string `json:"position"`
+	Institution *string `json:"institution"`
+}
+
 type ProjectListItem struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`

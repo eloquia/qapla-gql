@@ -54,6 +54,20 @@ query findUserListItems {
 
 ---
 
+## Create Personnel
+
+```graphql
+mutation createPersonnel {
+  createPersonnel(input: { firstName: "John", lastName: "Doe", goesBy: "Jack", middleName: "Bradly", email: "john.doe@gmail.com", gender: "M", ethnicity: "Caucasian", position: "Undergraduate Student", institution: "Made Up University", isActive: true}) {
+    id
+    firstName
+    lastName
+  }
+}
+```
+
+---
+
 ## Create Project 1
 
 ```graphql

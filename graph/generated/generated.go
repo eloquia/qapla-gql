@@ -57,6 +57,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AssignUserToProject func(childComplexity int, userID string, projectID string) int
 		CreateMeeting       func(childComplexity int, input model.NewMeeting) int
+		CreatePersonnel     func(childComplexity int, input model.NewPersonnel) int
 		CreateProject       func(childComplexity int, input model.NewProject) int
 		CreateUser          func(childComplexity int, email string, password string) int
 		SignIn              func(childComplexity int, email string, password string) int
@@ -115,6 +116,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateUser(ctx context.Context, email string, password string) (*model.User, error)
+	CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
 	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
 	UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error)
@@ -215,6 +217,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateMeeting(childComplexity, args["input"].(model.NewMeeting)), true
+
+	case "Mutation.createPersonnel":
+		if e.complexity.Mutation.CreatePersonnel == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPersonnel_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePersonnel(childComplexity, args["input"].(model.NewPersonnel)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -611,6 +625,18 @@ input UpdateUser {
   isActive: Boolean!
 }
 
+input NewPersonnel {
+  firstName: String!
+  lastName: String!
+  goesBy: String
+  middleName: String
+  email: String!
+  gender: String
+  ethnicity: String
+  position: String
+  institution: String
+}
+
 # # # # # # # # # # # # # # # # #
 #             Project
 # # # # # # # # # # # # # # # # #
@@ -680,6 +706,7 @@ type Mutation {
   # # # User
   # # #
   createUser(email: String!, password: String!): User!
+  createPersonnel(input: NewPersonnel!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
   # # #
@@ -761,6 +788,21 @@ func (ec *executionContext) field_Mutation_createMeeting_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewMeeting2qaplagqlᚋgraphᚋmodelᚐNewMeeting(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createPersonnel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewPersonnel
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewPersonnel2qaplagqlᚋgraphᚋmodelᚐNewPersonnel(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1219,6 +1261,48 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createPersonnel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createPersonnel_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreatePersonnel(rctx, args["input"].(model.NewPersonnel))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserDetails)
+	fc.Result = res
+	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3775,6 +3859,93 @@ func (ec *executionContext) unmarshalInputNewMeeting(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPersonnel(ctx context.Context, obj interface{}) (model.NewPersonnel, error) {
+	var it model.NewPersonnel
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "firstName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
+			it.FirstName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "lastName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
+			it.LastName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "goesBy":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goesBy"))
+			it.GoesBy, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "middleName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("middleName"))
+			it.MiddleName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gender":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+			it.Gender, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ethnicity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ethnicity"))
+			it.Ethnicity, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "position":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			it.Position, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "institution":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("institution"))
+			it.Institution, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewProject(ctx context.Context, obj interface{}) (model.NewProject, error) {
 	var it model.NewProject
 	asMap := map[string]interface{}{}
@@ -4050,6 +4221,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createUser":
 			out.Values[i] = ec._Mutation_createUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createPersonnel":
+			out.Values[i] = ec._Mutation_createPersonnel(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -4746,6 +4922,11 @@ func (ec *executionContext) unmarshalNNewMeeting2qaplagqlᚋgraphᚋmodelᚐNewM
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNNewPersonnel2qaplagqlᚋgraphᚋmodelᚐNewPersonnel(ctx context.Context, v interface{}) (model.NewPersonnel, error) {
+	res, err := ec.unmarshalInputNewPersonnel(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNNewProject2qaplagqlᚋgraphᚋmodelᚐNewProject(ctx context.Context, v interface{}) (model.NewProject, error) {
 	res, err := ec.unmarshalInputNewProject(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4951,6 +5132,20 @@ func (ec *executionContext) marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx 
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserDetails2qaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v model.UserDetails) graphql.Marshaler {
+	return ec._UserDetails(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

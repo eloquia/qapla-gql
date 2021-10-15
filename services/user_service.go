@@ -11,4 +11,5 @@ type UserService interface {
 	GetById(id string) (*model.User, error)
 	UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error)
 	GetAllUserDetails(ctx context.Context) ([]*model.UserDetails, error)
+	AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error)
 }

@@ -128,3 +128,74 @@ func (userService *UserServiceInmem) GetAllUserDetails(ctx context.Context) ([]*
 
 	return userDetails, nil
 }
+
+func (u *UserServiceInmem) AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error) {
+	// Make sure that email isn't already used
+	email := input.Email
+	isEmailExists := false
+	for _, user := range u.users {
+		if user.Email == email {
+			isEmailExists = true
+		}
+	}
+
+	if isEmailExists {
+		return &model.UserDetails{}, errors.New("Email already in use")
+	}
+
+	// check for default values
+	middleName := ""
+	if input.MiddleName != &middleName {
+		middleName = *input.MiddleName
+	}
+
+	goesBy := ""
+	if input.GoesBy != &goesBy {
+		goesBy = *input.GoesBy
+	}
+
+	gender := ""
+	if input.Gender != &gender {
+		gender = *input.Gender
+	}
+
+	ethnicity := ""
+	if input.Ethnicity != &ethnicity {
+		ethnicity = *input.Ethnicity
+	}
+
+	position := ""
+	if input.Position != &position {
+		position = *input.Position
+	}
+
+	institution := ""
+	if input.Institution != &institution {
+		institution = *input.Institution
+	}
+
+	userId := fmt.Sprintf("%+v", rand.Int())
+	user := &model.User{
+		ID:          userId,
+		FirstName:   input.FirstName,
+		LastName:    input.LastName,
+		MiddleName:  middleName,
+		GoesBy:      goesBy,
+		Email:       input.Email,
+		Gender:      gender,
+		Ethnicity:   ethnicity,
+		Position:    position,
+		Institution: institution,
+	}
+
+	u.users[userId] = user
+
+	userDetails := &model.UserDetails{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+	}
+
+	return userDetails, nil
+}
