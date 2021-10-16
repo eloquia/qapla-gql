@@ -142,9 +142,10 @@ func initializeProjects() map[string]*model.Project {
 func initializeMeetings() map[string]*model.Meeting {
 	meetingMap := make(map[string]*model.Meeting)
 	meetingMap["1"] = &model.Meeting{
-		ID:        "1",
-		Name:      "Test Meeting",
-		StartTime: time.Now(),
+		ID:              "1",
+		Name:            "Test Meeting",
+		StartTime:       time.Now(),
+		DurationMinutes: 30,
 	}
 
 	return meetingMap

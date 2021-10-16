@@ -54,25 +54,42 @@ func (u *MeetingServiceInmem) GetById(ctx context.Context, meetingID string) (*m
 	return foundMeeting, nil
 }
 
-func (m *MeetingServiceInmem) GetByDate(ctx context.Context, datetime time.Time) ([]*model.Meeting, error) {
+func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, datetime time.Time) ([]*model.MeetingListItem, error) {
 	log.Printf("Getting meetings by date: %+v", datetime)
 
-	year := datetime.Year()
-	month := datetime.Month()
-	day := datetime.Day()
-	// tz := datetime.z
-	log.Printf("year: %+v, month: %+v, day: %+v", year, month, day)
+	/*
+		To figure out the meetings within a certain range,
+		1. Calculate startDate
+			1a. Calculate time.Duration using hour, minute, second, millisecond from day
+		2. Calculate endDate
+		3. For each meeting, compare with time.After and time.Before
+	*/
 
-	var meetings []*model.Meeting
+	h := datetime.Hour()
+	hInMs := -time.Hour * time.Duration(h)
+	m := datetime.Minute()
+	mInMs := -time.Minute * time.Duration(m)
+	s := datetime.Second()
+	sInMs := -time.Second * time.Duration(s)
+	ns := time.Duration(-datetime.Nanosecond())
 
-	for _, meeting := range m.meetings {
-		log.Printf("meeting: %+v", meeting)
-		cy := meeting.StartTime.Year()
-		cm := meeting.StartTime.Month()
-		cd := meeting.StartTime.Day()
+	start := datetime.Add(hInMs).Add(mInMs).Add(sInMs).Add(ns)
+	log.Printf("start %+v", start)
 
-		if cy == year && cm == month && cd == day {
-			meetings = append(meetings, meeting)
+	end := start.Add(time.Hour * time.Duration(24)).Add(-1)
+	log.Printf("end %+v", end)
+
+	var meetings []*model.MeetingListItem
+
+	for _, meeting := range meetingService.meetings {
+
+		if meeting.StartTime.After(start) && meeting.StartTime.Before(end) {
+			meet := &model.MeetingListItem{
+				ID:        meeting.ID,
+				Name:      meeting.Name,
+				StartTime: meeting.StartTime,
+			}
+			meetings = append(meetings, meet)
 		}
 	}
 

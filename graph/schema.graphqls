@@ -103,6 +103,12 @@ type Meeting {
   durationMinutes: Int!
 }
 
+type MeetingListItem {
+  id: String!
+  name: String!
+  startTime: Time!
+}
+
 input NewMeeting {
   name: String!
   peopleIDs: [String]
@@ -160,8 +166,8 @@ type Query {
   # # #
   # # # Meeting
   # # #
-  getMeetingById(id: String!): Meeting!
-  getMeetingByDate(date: Time!): [Meeting]
+  meetingById(id: String!): Meeting!
+  meetingsByDate(date: Time!): [MeetingListItem]!
 }
 
 scalar Time

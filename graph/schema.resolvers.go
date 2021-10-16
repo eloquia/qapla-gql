@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
+	"log"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 	"time"
@@ -92,11 +93,11 @@ func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.Projec
 	return r.ProjectService.GetAllProjectDetails(ctx)
 }
 
-func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
+func (r *queryResolver) MeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
 	return r.MeetingService.GetById(ctx, id)
 }
 
-func (r *queryResolver) GetMeetingByDate(ctx context.Context, date time.Time) ([]*model.Meeting, error) {
+func (r *queryResolver) MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingListItem, error) {
 	return r.MeetingService.GetByDate(ctx, date)
 }
 
@@ -112,3 +113,17 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
+	return r.MeetingService.GetById(ctx, id)
+}
+func (r *queryResolver) GetMeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingListItem, error) {
+	log.Printf("GetMeetingsByDate date %+v", date)
+	return r.MeetingService.GetByDate(ctx, date)
+}

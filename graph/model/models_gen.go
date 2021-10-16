@@ -15,6 +15,12 @@ type Meeting struct {
 	DurationMinutes int        `json:"durationMinutes"`
 }
 
+type MeetingListItem struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	StartTime time.Time `json:"startTime"`
+}
+
 type NewMeeting struct {
 	Name            string    `json:"name"`
 	PeopleIDs       []*string `json:"peopleIDs"`
