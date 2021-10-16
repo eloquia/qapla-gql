@@ -67,7 +67,7 @@ type Project {
 type ProjectDetails {
   id: String!
   name: String!
-  description: String
+  description: String!
   personnel: [User]
   slug: String!
 }

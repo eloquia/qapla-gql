@@ -103,6 +103,7 @@ func (projectService *ProjectServiceInmem) GetProjectDetails(ctx context.Context
 		Description: foundProject.Description,
 		Slug:        foundProject.Slug,
 	}
+
 	return projectDetails, nil
 }
 
