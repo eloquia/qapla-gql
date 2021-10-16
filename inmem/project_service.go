@@ -54,7 +54,7 @@ func (projectService *ProjectServiceInmem) GetAll(ctx context.Context) ([]*model
 		projectDetail := &model.ProjectDetails{
 			ID:          project.ID,
 			Name:        project.Name,
-			Description: &project.Description,
+			Description: project.Description,
 			Slug:        project.Slug,
 		}
 
@@ -100,7 +100,7 @@ func (projectService *ProjectServiceInmem) GetProjectDetails(ctx context.Context
 	projectDetails := &model.ProjectDetails{
 		ID:          foundProject.ID,
 		Name:        foundProject.Name,
-		Description: &foundProject.Description,
+		Description: foundProject.Description,
 		Slug:        foundProject.Slug,
 	}
 	return projectDetails, nil
@@ -217,4 +217,27 @@ func kebabify(input string) string {
 	hyphens := strings.ReplaceAll(input, " ", "-")
 	lowercase := strings.ToLower(hyphens)
 	return lowercase
+}
+
+func (p *ProjectServiceInmem) GetAllProjectDetails(ctx context.Context) ([]*model.ProjectDetails, error) {
+	var projectDetailsList []*model.ProjectDetails
+	for _, project := range p.projects {
+		projectDetails := &model.ProjectDetails{
+			ID:          project.ID,
+			Name:        project.Name,
+			Description: project.Description,
+			Slug:        project.Slug,
+		}
+
+		var personnel []*model.User
+		personnelIDs := p.projectUser[project.ID]
+		for _, pID := range personnelIDs {
+			p := p.users[pID]
+			personnel = append(personnel, p)
+		}
+
+		projectDetails.Personnel = personnel
+		projectDetailsList = append(projectDetailsList, projectDetails)
+	}
+	return projectDetailsList, nil
 }

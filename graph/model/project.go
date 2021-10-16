@@ -25,7 +25,7 @@ type UpdateProject struct {
 type ProjectDetails struct {
 	ID          string  `json:"id"`
 	Name        string  `json:"name"`
-	Description *string `json:"description"`
+	Description string  `json:"description"`
 	Personnel   []*User `json:"personnel"`
 	Slug        string  `json:"slug"`
 }

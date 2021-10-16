@@ -155,6 +155,7 @@ type Query {
   projectListItems: [ProjectListItem]!
   getProjectById(id: String!): Project!
   projectDetails(slug: String!): ProjectDetails!
+  projectDetailsList: [ProjectDetails]!
 
   # # #
   # # # Meeting

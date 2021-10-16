@@ -90,14 +90,15 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetMeetingByDate func(childComplexity int, date time.Time) int
-		GetMeetingByID   func(childComplexity int, id string) int
-		GetProjectByID   func(childComplexity int, id string) int
-		GetUserByID      func(childComplexity int, id string) int
-		ProjectDetails   func(childComplexity int, slug string) int
-		ProjectListItems func(childComplexity int) int
-		UserDetails      func(childComplexity int) int
-		Users            func(childComplexity int) int
+		GetMeetingByDate   func(childComplexity int, date time.Time) int
+		GetMeetingByID     func(childComplexity int, id string) int
+		GetProjectByID     func(childComplexity int, id string) int
+		GetUserByID        func(childComplexity int, id string) int
+		ProjectDetails     func(childComplexity int, slug string) int
+		ProjectDetailsList func(childComplexity int) int
+		ProjectListItems   func(childComplexity int) int
+		UserDetails        func(childComplexity int) int
+		Users              func(childComplexity int) int
 	}
 
 	User struct {
@@ -135,6 +136,7 @@ type QueryResolver interface {
 	ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
 	GetProjectByID(ctx context.Context, id string) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
+	ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error)
 	GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error)
 	GetMeetingByDate(ctx context.Context, date time.Time) ([]*model.Meeting, error)
 }
@@ -457,6 +459,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProjectDetails(childComplexity, args["slug"].(string)), true
 
+	case "Query.projectDetailsList":
+		if e.complexity.Query.ProjectDetailsList == nil {
+			break
+		}
+
+		return e.complexity.Query.ProjectDetailsList(childComplexity), true
+
 	case "Query.projectListItems":
 		if e.complexity.Query.ProjectListItems == nil {
 			break
@@ -755,6 +764,7 @@ type Query {
   projectListItems: [ProjectListItem]!
   getProjectById(id: String!): Project!
   projectDetails(slug: String!): ProjectDetails!
+  projectDetailsList: [ProjectDetails]!
 
   # # #
   # # # Meeting
@@ -2320,6 +2330,41 @@ func (ec *executionContext) _Query_projectDetails(ctx context.Context, field gra
 	res := resTmp.(*model.ProjectDetails)
 	fc.Result = res
 	return ec.marshalNProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_projectDetailsList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProjectDetailsList(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ProjectDetails)
+	fc.Result = res
+	return ec.marshalNProjectDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getMeetingById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4567,6 +4612,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "projectDetailsList":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_projectDetailsList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "getMeetingById":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -5028,6 +5087,44 @@ func (ec *executionContext) marshalNProject2ᚖqaplagqlᚋgraphᚋmodelᚐProjec
 
 func (ec *executionContext) marshalNProjectDetails2qaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v model.ProjectDetails) graphql.Marshaler {
 	return ec._ProjectDetails(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProjectDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectDetails) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalNProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v *model.ProjectDetails) graphql.Marshaler {
@@ -5603,6 +5700,13 @@ func (ec *executionContext) marshalOProject2ᚖqaplagqlᚋgraphᚋmodelᚐProjec
 		return graphql.Null
 	}
 	return ec._Project(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProjectDetails2ᚖqaplagqlᚋgraphᚋmodelᚐProjectDetails(ctx context.Context, sel ast.SelectionSet, v *model.ProjectDetails) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProjectDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOProjectListItem2ᚖqaplagqlᚋgraphᚋmodelᚐProjectListItem(ctx context.Context, sel ast.SelectionSet, v *model.ProjectListItem) graphql.Marshaler {

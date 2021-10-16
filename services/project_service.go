@@ -14,4 +14,5 @@ type ProjectService interface {
 	GetProjectPersonnel(ctx context.Context, projectID string) ([]*model.User, error)
 	GetAssignedProjects(ctx context.Context, userID string) ([]*model.Project, error)
 	GetProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
+	GetAllProjectDetails(ctx context.Context) ([]*model.ProjectDetails, error)
 }

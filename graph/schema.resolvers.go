@@ -88,6 +88,10 @@ func (r *queryResolver) ProjectDetails(ctx context.Context, slug string) (*model
 	return r.ProjectService.GetProjectDetails(ctx, slug)
 }
 
+func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error) {
+	return r.ProjectService.GetAllProjectDetails(ctx)
+}
+
 func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
 	return r.MeetingService.GetById(ctx, id)
 }
