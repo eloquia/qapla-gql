@@ -8,6 +8,7 @@ import (
 	"errors"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
+	"time"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, email string, password string) (*model.User, error) {
@@ -89,6 +90,10 @@ func (r *queryResolver) ProjectDetails(ctx context.Context, slug string) (*model
 
 func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
 	return r.MeetingService.GetById(ctx, id)
+}
+
+func (r *queryResolver) GetMeetingByDate(ctx context.Context, date time.Time) ([]*model.Meeting, error) {
+	return r.MeetingService.GetByDate(ctx, date)
 }
 
 // Mutation returns generated.MutationResolver implementation.

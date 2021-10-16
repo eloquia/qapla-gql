@@ -149,3 +149,16 @@ query meetingById {
   }
 }
 ```
+
+## Get Meeting by Date
+
+```graphql
+query meetingByDate {
+  getMeetingByDate(date: "2021-10-13") {
+    id
+    name
+    startTime
+    durationMinutes
+  }
+}
+```

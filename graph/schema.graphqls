@@ -160,6 +160,7 @@ type Query {
   # # # Meeting
   # # #
   getMeetingById(id: String!): Meeting!
+  getMeetingByDate(date: Time!): [Meeting]
 }
 
 scalar Time

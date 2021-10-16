@@ -90,6 +90,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GetMeetingByDate func(childComplexity int, date time.Time) int
 		GetMeetingByID   func(childComplexity int, id string) int
 		GetProjectByID   func(childComplexity int, id string) int
 		GetUserByID      func(childComplexity int, id string) int
@@ -135,6 +136,7 @@ type QueryResolver interface {
 	GetProjectByID(ctx context.Context, id string) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
 	GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error)
+	GetMeetingByDate(ctx context.Context, date time.Time) ([]*model.Meeting, error)
 }
 
 type executableSchema struct {
@@ -394,6 +396,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectListItem.Slug(childComplexity), true
+
+	case "Query.getMeetingByDate":
+		if e.complexity.Query.GetMeetingByDate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getMeetingByDate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetMeetingByDate(childComplexity, args["date"].(time.Time)), true
 
 	case "Query.getMeetingById":
 		if e.complexity.Query.GetMeetingByID == nil {
@@ -746,6 +760,7 @@ type Query {
   # # # Meeting
   # # #
   getMeetingById(id: String!): Meeting!
+  getMeetingByDate(date: Time!): [Meeting]
 }
 
 scalar Time
@@ -916,6 +931,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getMeetingByDate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 time.Time
+	if tmp, ok := rawArgs["date"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+		arg0, err = ec.unmarshalNTime2timeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["date"] = arg0
 	return args, nil
 }
 
@@ -2332,6 +2362,45 @@ func (ec *executionContext) _Query_getMeetingById(ctx context.Context, field gra
 	res := resTmp.(*model.Meeting)
 	fc.Result = res
 	return ec.marshalNMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getMeetingByDate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getMeetingByDate_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetMeetingByDate(rctx, args["date"].(time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Meeting)
+	fc.Result = res
+	return ec.marshalOMeeting2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4512,6 +4581,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getMeetingByDate":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getMeetingByDate(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -5427,6 +5507,54 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOMeeting2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx context.Context, sel ast.SelectionSet, v []*model.Meeting) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx context.Context, sel ast.SelectionSet, v *model.Meeting) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Meeting(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {

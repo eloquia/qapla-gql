@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"qaplagql/graph/model"
+	"time"
 )
 
 type MeetingServiceInmem struct {
@@ -50,4 +52,29 @@ func (u *MeetingServiceInmem) GetById(ctx context.Context, meetingID string) (*m
 	}
 
 	return foundMeeting, nil
+}
+
+func (m *MeetingServiceInmem) GetByDate(ctx context.Context, datetime time.Time) ([]*model.Meeting, error) {
+	log.Printf("Getting meetings by date: %+v", datetime)
+
+	year := datetime.Year()
+	month := datetime.Month()
+	day := datetime.Day()
+	// tz := datetime.z
+	log.Printf("year: %+v, month: %+v, day: %+v", year, month, day)
+
+	var meetings []*model.Meeting
+
+	for _, meeting := range m.meetings {
+		log.Printf("meeting: %+v", meeting)
+		cy := meeting.StartTime.Year()
+		cm := meeting.StartTime.Month()
+		cd := meeting.StartTime.Day()
+
+		if cy == year && cm == month && cd == day {
+			meetings = append(meetings, meeting)
+		}
+	}
+
+	return meetings, nil
 }

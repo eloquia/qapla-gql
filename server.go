@@ -8,6 +8,7 @@ import (
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 	"qaplagql/inmem"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
@@ -49,7 +50,7 @@ func main() {
 	projectUser := make([]string, 1)
 	projectUser[0] = "1"
 	projectUserMap["1"] = projectUser
-	meetingMap := make(map[string]*model.Meeting)
+	meetingMap := initializeMeetings()
 	meetingUserMap := make(map[string][]string)
 	meetingProjectMap := make(map[string][]string)
 
@@ -136,4 +137,15 @@ func initializeProjects() map[string]*model.Project {
 	}
 
 	return projectMap
+}
+
+func initializeMeetings() map[string]*model.Meeting {
+	meetingMap := make(map[string]*model.Meeting)
+	meetingMap["1"] = &model.Meeting{
+		ID:        "1",
+		Name:      "Test Meeting",
+		StartTime: time.Now(),
+	}
+
+	return meetingMap
 }
