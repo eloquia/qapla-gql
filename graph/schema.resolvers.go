@@ -6,7 +6,7 @@ package graph
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 	"time"
@@ -57,8 +57,12 @@ func (r *mutationResolver) SignIn(ctx context.Context, email string, password st
 	return r.AuthService.SignIn(ctx, email, password)
 }
 
-func (r *mutationResolver) CreateMeeting(ctx context.Context, input model.NewMeeting) (*model.Meeting, error) {
-	return r.MeetingService.Create(ctx, input)
+func (r *mutationResolver) CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error) {
+	return r.MeetingService.CreatePersonMeeting(ctx, input)
+}
+
+func (r *mutationResolver) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *projectResolver) Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error) {
@@ -97,7 +101,7 @@ func (r *queryResolver) MeetingByID(ctx context.Context, id string) (*model.Meet
 	return r.MeetingService.GetById(ctx, id)
 }
 
-func (r *queryResolver) MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingListItem, error) {
+func (r *queryResolver) MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingDetails, error) {
 	return r.MeetingService.GetByDate(ctx, date)
 }
 
@@ -113,17 +117,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 type mutationResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) GetMeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
-	return r.MeetingService.GetById(ctx, id)
-}
-func (r *queryResolver) GetMeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingListItem, error) {
-	log.Printf("GetMeetingsByDate date %+v", date)
-	return r.MeetingService.GetByDate(ctx, date)
-}

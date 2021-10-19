@@ -15,18 +15,44 @@ type Meeting struct {
 	DurationMinutes int        `json:"durationMinutes"`
 }
 
+type MeetingDetails struct {
+	ID              string         `json:"id"`
+	Name            string         `json:"name"`
+	People          []*User        `json:"people"`
+	Projects        []*Project     `json:"projects"`
+	MeetingItems    []*MeetingItem `json:"meetingItems"`
+	StartTime       time.Time      `json:"startTime"`
+	DurationMinutes int            `json:"durationMinutes"`
+}
+
+type MeetingItem struct {
+	ID                      string         `json:"id"`
+	Personnel               *User          `json:"personnel"`
+	PlannedAttendanceStatus string         `json:"plannedAttendanceStatus"`
+	ActualAttendanceStatus  string         `json:"actualAttendanceStatus"`
+	AttendanceReason        *string        `json:"attendanceReason"`
+	Notes                   []*MeetingNote `json:"notes"`
+}
+
 type MeetingListItem struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	StartTime time.Time `json:"startTime"`
 }
 
-type NewMeeting struct {
-	Name            string    `json:"name"`
-	PeopleIDs       []*string `json:"peopleIDs"`
-	ProjectIDs      []*string `json:"projectIDs"`
-	StartTime       time.Time `json:"startTime"`
-	DurationMinutes int       `json:"durationMinutes"`
+type MeetingNote struct {
+	ID        string            `json:"id"`
+	About     *User             `json:"about"`
+	Author    *User             `json:"author"`
+	Text      string            `json:"text"`
+	Tags      []*MeetingNoteTag `json:"tags"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
+}
+
+type MeetingNoteTag struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
 }
 
 type NewPersonnel struct {
@@ -39,6 +65,20 @@ type NewPersonnel struct {
 	Ethnicity   *string `json:"ethnicity"`
 	Position    *string `json:"position"`
 	Institution *string `json:"institution"`
+}
+
+type NewProjectMeeting struct {
+	Name            string    `json:"name"`
+	ProjectIDs      []*string `json:"projectIDs"`
+	StartTime       time.Time `json:"startTime"`
+	DurationMinutes int       `json:"durationMinutes"`
+}
+
+type NewUserMeeting struct {
+	Name            string    `json:"name"`
+	PeopleIDs       []*string `json:"peopleIDs"`
+	StartTime       time.Time `json:"startTime"`
+	DurationMinutes int       `json:"durationMinutes"`
 }
 
 type ProjectListItem struct {

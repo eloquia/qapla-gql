@@ -30,13 +30,49 @@ func NewMeetingServiceInmem(meetingMap map[string]*model.Meeting, userMap map[st
 	}
 }
 
-func (u *MeetingServiceInmem) Create(ctx context.Context, input model.NewMeeting) (*model.Meeting, error) {
+func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error) {
+	log.Printf("Creating Person Meeting: %+v", input)
 	meetingID := fmt.Sprintf("%+v", rand.Int())
+
+	var users []*model.User
+	for _, userID := range input.PeopleIDs {
+		user := u.users[*userID]
+		if user != nil {
+			users = append(users, user)
+		}
+	}
+
 	meeting := &model.Meeting{
 		ID:              meetingID,
 		Name:            input.Name,
 		StartTime:       input.StartTime,
 		DurationMinutes: input.DurationMinutes,
+		People:          users,
+	}
+
+	u.meetings[meetingID] = meeting
+
+	return meeting, nil
+}
+
+func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error) {
+	log.Printf("Creating Person Meeting: %+v", input)
+	meetingID := fmt.Sprintf("%+v", rand.Int())
+
+	var projects []*model.Project
+	for _, projectID := range input.ProjectIDs {
+		project := u.projects[*projectID]
+		if project != nil {
+			projects = append(projects, project)
+		}
+	}
+
+	meeting := &model.Meeting{
+		ID:              meetingID,
+		Name:            input.Name,
+		StartTime:       input.StartTime,
+		DurationMinutes: input.DurationMinutes,
+		Projects:        projects,
 	}
 
 	u.meetings[meetingID] = meeting
@@ -54,7 +90,7 @@ func (u *MeetingServiceInmem) GetById(ctx context.Context, meetingID string) (*m
 	return foundMeeting, nil
 }
 
-func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, datetime time.Time) ([]*model.MeetingListItem, error) {
+func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, datetime time.Time) ([]*model.MeetingDetails, error) {
 	log.Printf("Getting meetings by date: %+v", datetime)
 
 	/*
@@ -79,12 +115,12 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 	end := start.Add(time.Hour * time.Duration(24)).Add(-1)
 	log.Printf("end %+v", end)
 
-	var meetings []*model.MeetingListItem
+	var meetings []*model.MeetingDetails
 
 	for _, meeting := range meetingService.meetings {
 
 		if meeting.StartTime.After(start) && meeting.StartTime.Before(end) {
-			meet := &model.MeetingListItem{
+			meet := &model.MeetingDetails{
 				ID:        meeting.ID,
 				Name:      meeting.Name,
 				StartTime: meeting.StartTime,
@@ -92,6 +128,8 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 			meetings = append(meetings, meet)
 		}
 	}
+
+	log.Printf("Found total of %+v meetings", len(meetings))
 
 	return meetings, nil
 }

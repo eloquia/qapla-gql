@@ -7,7 +7,8 @@ import (
 )
 
 type MeetingService interface {
-	Create(ctx context.Context, input model.NewMeeting) (*model.Meeting, error)
+	CreatePersonMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error)
+	CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error)
 	GetById(ctx context.Context, meetingID string) (*model.Meeting, error)
-	GetByDate(ctx context.Context, date time.Time) ([]*model.MeetingListItem, error)
+	GetByDate(ctx context.Context, date time.Time) ([]*model.MeetingDetails, error)
 }

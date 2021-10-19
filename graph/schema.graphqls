@@ -109,10 +109,50 @@ type MeetingListItem {
   startTime: Time!
 }
 
-input NewMeeting {
+input NewUserMeeting {
   name: String!
   peopleIDs: [String]
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+input NewProjectMeeting {
+  name: String!
   projectIDs: [String]
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+type MeetingNoteTag {
+  id: String!
+  text: String!
+}
+
+type MeetingNote {
+  id: String!
+  about: User!
+  author: User!
+  text: String!
+  tags: [MeetingNoteTag]
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type MeetingItem {
+  id: String!
+  personnel: User!
+  plannedAttendanceStatus: String!
+  actualAttendanceStatus: String!
+  attendanceReason: String
+  notes: [MeetingNote]
+}
+
+type MeetingDetails {
+  id: String!
+  name: String!
+  people: [User]
+  projects: [Project]
+  meetingItems: [MeetingItem]
   startTime: Time!
   durationMinutes: Int!
 }
@@ -144,7 +184,8 @@ type Mutation {
   # # #
   # # # Meeting
   # # #
-  createMeeting(input: NewMeeting!): Meeting!
+  createUserMeeting(input: NewUserMeeting!): Meeting!
+  createProjectMeeting(input: NewProjectMeeting!): Meeting!
 }
 
 type Query {
@@ -167,7 +208,7 @@ type Query {
   # # # Meeting
   # # #
   meetingById(id: String!): Meeting!
-  meetingsByDate(date: Time!): [MeetingListItem]!
+  meetingsByDate(date: Time!): [MeetingDetails]!
 }
 
 scalar Time
