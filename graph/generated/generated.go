@@ -138,6 +138,7 @@ type ComplexityRoot struct {
 		ProjectDetails     func(childComplexity int, slug string) int
 		ProjectDetailsList func(childComplexity int) int
 		ProjectListItems   func(childComplexity int) int
+		Tags               func(childComplexity int) int
 		UserDetails        func(childComplexity int) int
 		Users              func(childComplexity int) int
 	}
@@ -165,8 +166,8 @@ type MutationResolver interface {
 	UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error)
 	AssignUserToProject(ctx context.Context, userID string, projectID string) (*model.User, error)
 	SignIn(ctx context.Context, email string, password string) (*model.User, error)
-	CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error)
-	CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error)
+	CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.MeetingDetails, error)
+	CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error)
 }
 type ProjectResolver interface {
 	Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error)
@@ -179,8 +180,9 @@ type QueryResolver interface {
 	GetProjectByID(ctx context.Context, id string) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
 	ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error)
-	MeetingByID(ctx context.Context, id string) (*model.Meeting, error)
+	MeetingByID(ctx context.Context, id string) (*model.MeetingDetails, error)
 	MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingDetails, error)
+	Tags(ctx context.Context) ([]*model.MeetingNoteTag, error)
 }
 
 type executableSchema struct {
@@ -702,6 +704,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ProjectListItems(childComplexity), true
 
+	case "Query.tags":
+		if e.complexity.Query.Tags == nil {
+			break
+		}
+
+		return e.complexity.Query.Tags(childComplexity), true
+
 	case "Query.userDetails":
 		if e.complexity.Query.UserDetails == nil {
 			break
@@ -1022,8 +1031,8 @@ type Mutation {
   # # #
   # # # Meeting
   # # #
-  createUserMeeting(input: NewUserMeeting!): Meeting!
-  createProjectMeeting(input: NewProjectMeeting!): Meeting!
+  createUserMeeting(input: NewUserMeeting!): MeetingDetails!
+  createProjectMeeting(input: NewProjectMeeting!): MeetingDetails!
 }
 
 type Query {
@@ -1045,8 +1054,13 @@ type Query {
   # # #
   # # # Meeting
   # # #
-  meetingById(id: String!): Meeting!
+  meetingById(id: String!): MeetingDetails!
   meetingsByDate(date: Time!): [MeetingDetails]!
+
+  # # #
+  # # # Meeting Note Tags
+  # # #
+  tags: [MeetingNoteTag]!
 }
 
 scalar Time
@@ -2740,9 +2754,9 @@ func (ec *executionContext) _Mutation_createUserMeeting(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Meeting)
+	res := resTmp.(*model.MeetingDetails)
 	fc.Result = res
-	return ec.marshalNMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createProjectMeeting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2782,9 +2796,9 @@ func (ec *executionContext) _Mutation_createProjectMeeting(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Meeting)
+	res := resTmp.(*model.MeetingDetails)
 	fc.Result = res
-	return ec.marshalNMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_id(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -3597,9 +3611,9 @@ func (ec *executionContext) _Query_meetingById(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Meeting)
+	res := resTmp.(*model.MeetingDetails)
 	fc.Result = res
-	return ec.marshalNMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx, field.Selections, res)
+	return ec.marshalNMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_meetingsByDate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3642,6 +3656,41 @@ func (ec *executionContext) _Query_meetingsByDate(ctx context.Context, field gra
 	res := resTmp.([]*model.MeetingDetails)
 	fc.Result = res
 	return ec.marshalNMeetingDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Tags(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MeetingNoteTag)
+	fc.Result = res
+	return ec.marshalNMeetingNoteTag2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeetingNoteTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6114,6 +6163,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "tags":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_tags(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -6505,18 +6568,8 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMeeting2qaplagqlᚋgraphᚋmodelᚐMeeting(ctx context.Context, sel ast.SelectionSet, v model.Meeting) graphql.Marshaler {
-	return ec._Meeting(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNMeeting2ᚖqaplagqlᚋgraphᚋmodelᚐMeeting(ctx context.Context, sel ast.SelectionSet, v *model.Meeting) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Meeting(ctx, sel, v)
+func (ec *executionContext) marshalNMeetingDetails2qaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx context.Context, sel ast.SelectionSet, v model.MeetingDetails) graphql.Marshaler {
+	return ec._MeetingDetails(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNMeetingDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx context.Context, sel ast.SelectionSet, v []*model.MeetingDetails) graphql.Marshaler {
@@ -6544,6 +6597,54 @@ func (ec *executionContext) marshalNMeetingDetails2ᚕᚖqaplagqlᚋgraphᚋmode
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalOMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx context.Context, sel ast.SelectionSet, v *model.MeetingDetails) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._MeetingDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMeetingNoteTag2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeetingNoteTag(ctx context.Context, sel ast.SelectionSet, v []*model.MeetingNoteTag) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOMeetingNoteTag2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingNoteTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

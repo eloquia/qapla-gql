@@ -57,11 +57,11 @@ func (r *mutationResolver) SignIn(ctx context.Context, email string, password st
 	return r.AuthService.SignIn(ctx, email, password)
 }
 
-func (r *mutationResolver) CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error) {
+func (r *mutationResolver) CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.MeetingDetails, error) {
 	return r.MeetingService.CreatePersonMeeting(ctx, input)
 }
 
-func (r *mutationResolver) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error) {
+func (r *mutationResolver) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -97,12 +97,16 @@ func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.Projec
 	return r.ProjectService.GetAllProjectDetails(ctx)
 }
 
-func (r *queryResolver) MeetingByID(ctx context.Context, id string) (*model.Meeting, error) {
+func (r *queryResolver) MeetingByID(ctx context.Context, id string) (*model.MeetingDetails, error) {
 	return r.MeetingService.GetById(ctx, id)
 }
 
 func (r *queryResolver) MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingDetails, error) {
 	return r.MeetingService.GetByDate(ctx, date)
+}
+
+func (r *queryResolver) Tags(ctx context.Context) ([]*model.MeetingNoteTag, error) {
+	return r.TagService.GetAll(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.

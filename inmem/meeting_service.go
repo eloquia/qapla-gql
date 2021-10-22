@@ -11,15 +11,16 @@ import (
 )
 
 type MeetingServiceInmem struct {
-	meetings        map[string]*model.Meeting
+	meetings        map[string]*model.MeetingDetails
 	projects        map[string]*model.Project
 	projectUser     map[string][]string
 	users           map[string]*model.User
 	meetingUsers    map[string][]string
 	meetingProjects map[string][]string
+	tags            map[string]*model.MeetingNoteTag
 }
 
-func NewMeetingServiceInmem(meetingMap map[string]*model.Meeting, userMap map[string]*model.User, projectMap map[string]*model.Project, projectUserMap map[string][]string, meetingUserMap map[string][]string, meetingProjectMap map[string][]string) *MeetingServiceInmem {
+func NewMeetingServiceInmem(meetingMap map[string]*model.MeetingDetails, userMap map[string]*model.User, projectMap map[string]*model.Project, projectUserMap map[string][]string, meetingUserMap map[string][]string, meetingProjectMap map[string][]string, tagMap map[string]*model.MeetingNoteTag) *MeetingServiceInmem {
 	return &MeetingServiceInmem{
 		meetings:        meetingMap,
 		projects:        projectMap,
@@ -27,10 +28,11 @@ func NewMeetingServiceInmem(meetingMap map[string]*model.Meeting, userMap map[st
 		users:           userMap,
 		meetingUsers:    meetingUserMap,
 		meetingProjects: meetingProjectMap,
+		tags:            tagMap,
 	}
 }
 
-func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input model.NewUserMeeting) (*model.Meeting, error) {
+func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input model.NewUserMeeting) (*model.MeetingDetails, error) {
 	log.Printf("Creating Person Meeting: %+v", input)
 	meetingID := fmt.Sprintf("%+v", rand.Int())
 
@@ -42,7 +44,7 @@ func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input mod
 		}
 	}
 
-	meeting := &model.Meeting{
+	meeting := &model.MeetingDetails{
 		ID:              meetingID,
 		Name:            input.Name,
 		StartTime:       input.StartTime,
@@ -55,7 +57,7 @@ func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input mod
 	return meeting, nil
 }
 
-func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.Meeting, error) {
+func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error) {
 	log.Printf("Creating Person Meeting: %+v", input)
 	meetingID := fmt.Sprintf("%+v", rand.Int())
 
@@ -67,7 +69,7 @@ func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input mo
 		}
 	}
 
-	meeting := &model.Meeting{
+	meeting := &model.MeetingDetails{
 		ID:              meetingID,
 		Name:            input.Name,
 		StartTime:       input.StartTime,
@@ -80,11 +82,11 @@ func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input mo
 	return meeting, nil
 }
 
-func (u *MeetingServiceInmem) GetById(ctx context.Context, meetingID string) (*model.Meeting, error) {
+func (u *MeetingServiceInmem) GetById(ctx context.Context, meetingID string) (*model.MeetingDetails, error) {
 	foundMeeting := u.meetings[meetingID]
 
 	if foundMeeting == nil {
-		return &model.Meeting{}, errors.New("Meeting with ID not found")
+		return &model.MeetingDetails{}, errors.New("Meeting with ID not found")
 	}
 
 	return foundMeeting, nil
@@ -121,9 +123,15 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 
 		if meeting.StartTime.After(start) && meeting.StartTime.Before(end) {
 			meet := &model.MeetingDetails{
-				ID:        meeting.ID,
-				Name:      meeting.Name,
-				StartTime: meeting.StartTime,
+				ID:              meeting.ID,
+				Name:            meeting.Name,
+				StartTime:       meeting.StartTime,
+				DurationMinutes: meeting.DurationMinutes,
+				MeetingItems:    meeting.MeetingItems,
+			}
+
+			if len(meeting.People) > 0 {
+				meet.People = meeting.People
 			}
 			meetings = append(meetings, meet)
 		}

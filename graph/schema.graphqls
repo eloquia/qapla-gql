@@ -184,8 +184,8 @@ type Mutation {
   # # #
   # # # Meeting
   # # #
-  createUserMeeting(input: NewUserMeeting!): Meeting!
-  createProjectMeeting(input: NewProjectMeeting!): Meeting!
+  createUserMeeting(input: NewUserMeeting!): MeetingDetails!
+  createProjectMeeting(input: NewProjectMeeting!): MeetingDetails!
 }
 
 type Query {
@@ -207,8 +207,13 @@ type Query {
   # # #
   # # # Meeting
   # # #
-  meetingById(id: String!): Meeting!
+  meetingById(id: String!): MeetingDetails!
   meetingsByDate(date: Time!): [MeetingDetails]!
+
+  # # #
+  # # # Meeting Note Tags
+  # # #
+  tags: [MeetingNoteTag]!
 }
 
 scalar Time

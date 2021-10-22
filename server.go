@@ -53,6 +53,7 @@ func main() {
 	meetingMap := initializeMeetings()
 	meetingUserMap := make(map[string][]string)
 	meetingProjectMap := make(map[string][]string)
+	tagMap := initializeTags()
 
 	userServiceInmem := inmem.NewUserServiceInmem(
 		usersMap,
@@ -77,7 +78,10 @@ func main() {
 		projectUserMap,
 		meetingUserMap,
 		meetingProjectMap,
+		tagMap,
 	)
+
+	tagServiceInmem := inmem.NewTagServiceInmem(tagMap)
 
 	/* - - - - - - - - -
 			Set up server
@@ -90,6 +94,7 @@ func main() {
 				ProjectService: projectServiceInmem,
 				AuthService:    authServiceInmem,
 				MeetingService: meetingServiceInmem,
+				TagService:     tagServiceInmem,
 			}}))
 
 	srv.AddTransport(&transport.Websocket{
@@ -139,14 +144,81 @@ func initializeProjects() map[string]*model.Project {
 	return projectMap
 }
 
-func initializeMeetings() map[string]*model.Meeting {
-	meetingMap := make(map[string]*model.Meeting)
-	meetingMap["1"] = &model.Meeting{
+func initializeMeetings() map[string]*model.MeetingDetails {
+	meetingMap := make(map[string]*model.MeetingDetails)
+
+	var users []*model.User
+	dale := &model.User{
+		ID:          "1",
+		FirstName:   "Dale",
+		LastName:    "Chang",
+		GoesBy:      "Dale",
+		MiddleName:  "",
+		Email:       "dale@eloquia.io",
+		Gender:      "M",
+		Ethnicity:   "East Asian",
+		Position:    "Software Engineer",
+		Institution: "Cigna",
+	}
+	users = append(users, dale)
+
+	var tags []*model.MeetingNoteTag
+	tag := &model.MeetingNoteTag{
+		ID:   "1",
+		Text: "Good",
+	}
+	tags = append(tags, tag)
+	var notes []*model.MeetingNote
+	note := &model.MeetingNote{
+		ID:     "1",
+		About:  dale,
+		Author: dale,
+		Text:   "Test status",
+		Tags:   tags,
+	}
+	notes = append(notes, note)
+	var meetingItems []*model.MeetingItem
+	attendanceReason := ""
+	meetingItem := &model.MeetingItem{
+		ID:                      "1",
+		Personnel:               dale,
+		PlannedAttendanceStatus: "Attending",
+		ActualAttendanceStatus:  "Attending",
+		AttendanceReason:        &attendanceReason,
+		Notes:                   notes,
+	}
+	meetingItems = append(meetingItems, meetingItem)
+
+	meetingMap["1"] = &model.MeetingDetails{
 		ID:              "1",
 		Name:            "Test Meeting",
 		StartTime:       time.Now(),
 		DurationMinutes: 30,
+		People:          users,
+		MeetingItems:    meetingItems,
 	}
 
 	return meetingMap
+}
+
+func initializeTags() map[string]*model.MeetingNoteTag {
+	tagMap := make(map[string]*model.MeetingNoteTag)
+	tagMap["1"] = &model.MeetingNoteTag{
+		ID:   "1",
+		Text: "Good",
+	}
+	tagMap["2"] = &model.MeetingNoteTag{
+		ID:   "2",
+		Text: "Bad",
+	}
+	tagMap["3"] = &model.MeetingNoteTag{
+		ID:   "3",
+		Text: "Breakthrough",
+	}
+	tagMap["4"] = &model.MeetingNoteTag{
+		ID:   "4",
+		Text: "Status",
+	}
+
+	return tagMap
 }

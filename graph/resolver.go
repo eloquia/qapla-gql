@@ -19,4 +19,5 @@ type Resolver struct {
 	ProjectService services.ProjectService
 	AuthService    services.AuthService
 	MeetingService services.MeetingService
+	TagService     services.TagService
 }
