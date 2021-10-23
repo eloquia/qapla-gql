@@ -3,8 +3,7 @@ package inmem
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math/rand"
+	"qaplagql/common"
 	"qaplagql/graph/model"
 	"strings"
 )
@@ -35,7 +34,7 @@ func (projectService *ProjectServiceInmem) CreateProject(ctx context.Context, in
 		return &model.Project{}, errors.New("Project with name already exists")
 	}
 
-	projectID := fmt.Sprintf("%+v", rand.Int())
+	projectID := common.RandomId()
 	newProject := &model.Project{
 		ID:          projectID,
 		Name:        input.Name,

@@ -3,9 +3,8 @@ package inmem
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
-	"math/rand"
+	"qaplagql/common"
 	"qaplagql/graph/model"
 	"time"
 )
@@ -34,7 +33,7 @@ func NewMeetingServiceInmem(meetingMap map[string]*model.MeetingDetails, userMap
 
 func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input model.NewUserMeeting) (*model.MeetingDetails, error) {
 	log.Printf("Creating Person Meeting: %+v", input)
-	meetingID := fmt.Sprintf("%+v", rand.Int())
+	meetingID := common.RandomId()
 
 	var users []*model.User
 	for _, userID := range input.PeopleIDs {
@@ -52,6 +51,24 @@ func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input mod
 		People:          users,
 	}
 
+	// Create meeting items for each personnel
+	var meetingItems []*model.MeetingItem
+	for _, pID := range input.PeopleIDs {
+		personnel := u.users[*pID]
+		attendanceReason := ""
+		meetingItem := &model.MeetingItem{
+			ID:                      common.RandomId(),
+			Personnel:               personnel,
+			PlannedAttendanceStatus: "Attending",
+			ActualAttendanceStatus:  "Attending",
+			AttendanceReason:        &attendanceReason,
+		}
+
+		meetingItems = append(meetingItems, meetingItem)
+	}
+
+	meeting.MeetingItems = meetingItems
+
 	u.meetings[meetingID] = meeting
 
 	return meeting, nil
@@ -59,7 +76,7 @@ func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input mod
 
 func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error) {
 	log.Printf("Creating Person Meeting: %+v", input)
-	meetingID := fmt.Sprintf("%+v", rand.Int())
+	meetingID := common.RandomId()
 
 	var projects []*model.Project
 	for _, projectID := range input.ProjectIDs {

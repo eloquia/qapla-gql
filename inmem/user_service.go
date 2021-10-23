@@ -3,8 +3,7 @@ package inmem
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math/rand"
+	"qaplagql/common"
 	"qaplagql/graph/model"
 )
 
@@ -36,7 +35,7 @@ func (userService *UserServiceInmem) CreateUser(ctx context.Context, input *mode
 
 	// create user
 	user := &model.User{
-		ID:       fmt.Sprintf("%+v", rand.Int()),
+		ID:       common.RandomId(),
 		Email:    input.Email,
 		Password: input.Password,
 	}
@@ -174,7 +173,7 @@ func (u *UserServiceInmem) AddPersonnel(ctx context.Context, input model.NewPers
 		institution = *input.Institution
 	}
 
-	userId := fmt.Sprintf("%+v", rand.Int())
+	userId := common.RandomId()
 	user := &model.User{
 		ID:          userId,
 		FirstName:   input.FirstName,
