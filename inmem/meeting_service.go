@@ -17,9 +17,11 @@ type MeetingServiceInmem struct {
 	meetingUsers    map[string][]string
 	meetingProjects map[string][]string
 	tags            map[string]*model.MeetingNoteTag
+	meetingItems    map[string]*model.MeetingItem
+	meetingNotes    map[string]*model.MeetingNote
 }
 
-func NewMeetingServiceInmem(meetingMap map[string]*model.MeetingDetails, userMap map[string]*model.User, projectMap map[string]*model.Project, projectUserMap map[string][]string, meetingUserMap map[string][]string, meetingProjectMap map[string][]string, tagMap map[string]*model.MeetingNoteTag) *MeetingServiceInmem {
+func NewMeetingServiceInmem(meetingMap map[string]*model.MeetingDetails, userMap map[string]*model.User, projectMap map[string]*model.Project, projectUserMap map[string][]string, meetingUserMap map[string][]string, meetingProjectMap map[string][]string, tagMap map[string]*model.MeetingNoteTag, meetingItemMap map[string]*model.MeetingItem, meetingNoteMap map[string]*model.MeetingNote) *MeetingServiceInmem {
 	return &MeetingServiceInmem{
 		meetings:        meetingMap,
 		projects:        projectMap,
@@ -28,6 +30,8 @@ func NewMeetingServiceInmem(meetingMap map[string]*model.MeetingDetails, userMap
 		meetingUsers:    meetingUserMap,
 		meetingProjects: meetingProjectMap,
 		tags:            tagMap,
+		meetingItems:    meetingItemMap,
+		meetingNotes:    meetingNoteMap,
 	}
 }
 
@@ -75,7 +79,7 @@ func (u *MeetingServiceInmem) CreatePersonMeeting(ctx context.Context, input mod
 }
 
 func (u *MeetingServiceInmem) CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error) {
-	log.Printf("Creating Person Meeting: %+v", input)
+	log.Printf("Creating Project Meeting: %+v", input)
 	meetingID := common.RandomId()
 
 	var projects []*model.Project
@@ -157,4 +161,57 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 	log.Printf("Found total of %+v meetings", len(meetings))
 
 	return meetings, nil
+}
+
+func (ms *MeetingServiceInmem) UpdatePersonMeeting(ctx context.Context, input model.UpdatedPeopleMeetingDetails) (*model.PeopleMeetingDetails, error) {
+	/*
+		1. Check to see Meeting with ID exists
+		2. Update Name
+		3. Update Start Time
+		4. Update list of people (if needed)
+		5. Update each Meeting Item
+	*/
+	log.Printf("UpdatePersonMeeting %+v", input)
+
+	foundPeopleMeetingDetails := ms.meetings[input.ID]
+	if foundPeopleMeetingDetails == nil {
+		return &model.PeopleMeetingDetails{}, errors.New("Meeting with ID not found")
+	}
+
+	foundPeopleMeetingDetails.Name = input.Name
+	foundPeopleMeetingDetails.StartTime = input.StartTime
+
+	var newlyAssignedPeople []*model.User
+	for i := 0; i < len(input.People); i++ {
+		person := ms.users[*input.People[i]]
+		newlyAssignedPeople = append(newlyAssignedPeople, person)
+	}
+
+	foundPeopleMeetingDetails.People = newlyAssignedPeople
+
+	// meeting items need to be created if they don't have an ID
+	// else find and update
+	for i := 0; i < len(input.MeetingItems); i++ {
+		meetingItem := input.MeetingItems[i]
+		if meetingItem.ID == "0" {
+
+		} else {
+
+		}
+	}
+
+	ms.meetings[input.ID] = foundPeopleMeetingDetails
+
+	// convert to PeopleMeetingDetails
+	peopleMeetingDetails := &model.PeopleMeetingDetails{
+		ID:   foundPeopleMeetingDetails.ID,
+		Name: foundPeopleMeetingDetails.Name,
+	}
+
+	return peopleMeetingDetails, nil
+}
+
+func (ms *MeetingServiceInmem) UpdateMeetingItem(ctx context.Context, input model.UpdateMeetingItemRequest) (*model.MeetingItem, error) {
+
+	return &model.MeetingItem{}, nil
 }

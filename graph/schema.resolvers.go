@@ -65,6 +65,14 @@ func (r *mutationResolver) CreateProjectMeeting(ctx context.Context, input model
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) UpdateUserMeeting(ctx context.Context, input model.UpdatedPeopleMeetingDetails) (*model.PeopleMeetingDetails, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UpdateMeetingItem(ctx context.Context, input model.UpdateMeetingItemRequest) (*model.MeetingItem, error) {
+	return r.MeetingService.UpdateMeetingItem(ctx, input)
+}
+
 func (r *projectResolver) Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error) {
 	return r.ProjectService.GetProjectPersonnel(ctx, obj.ID)
 }

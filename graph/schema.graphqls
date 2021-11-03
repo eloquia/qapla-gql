@@ -123,9 +123,24 @@ input NewProjectMeeting {
   durationMinutes: Int!
 }
 
+input MeetingNoteTagInput {
+  id: String!
+  text: String!
+}
+
 type MeetingNoteTag {
   id: String!
   text: String!
+}
+
+input MeetingNoteInput {
+  id: String
+  about: String!
+  author: String!
+  text: String!
+  tags: [MeetingNoteTagInput]
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type MeetingNote {
@@ -136,6 +151,15 @@ type MeetingNote {
   tags: [MeetingNoteTag]
   createdAt: Time!
   updatedAt: Time!
+}
+
+input MeetingItemInput {
+  id: String!
+  personnel: String!
+  plannedAttendanceStatus: String!
+  actualAttendanceStatus: String!
+  attendanceReason: String
+  notes: [MeetingNoteInput]
 }
 
 type MeetingItem {
@@ -155,6 +179,33 @@ type MeetingDetails {
   meetingItems: [MeetingItem]
   startTime: Time!
   durationMinutes: Int!
+}
+
+input UpdatedPeopleMeetingDetails {
+  id: String!
+  name: String!
+  people: [String]
+  meetingItems: [MeetingItemInput!]!
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+type PeopleMeetingDetails {
+  id: String!
+  name: String!
+  people: [User]
+  meetingItems: [MeetingItem]
+  startTime: Time!
+  durationMinutes: Int!
+}
+
+input UpdateMeetingItemRequest {
+  id: String!
+  personnelID: String!
+  plannedAttendanceStatus: String!
+  actualAttendanceStatus: String!
+  attendanceReason: String!
+  notes: [MeetingNoteInput!]!
 }
 
 # # # # # # # # # # # # # # # # #
@@ -186,6 +237,8 @@ type Mutation {
   # # #
   createUserMeeting(input: NewUserMeeting!): MeetingDetails!
   createProjectMeeting(input: NewProjectMeeting!): MeetingDetails!
+  updateUserMeeting(input: UpdatedPeopleMeetingDetails!): PeopleMeetingDetails!
+  updateMeetingItem(input: UpdateMeetingItemRequest!): MeetingItem!
 }
 
 type Query {

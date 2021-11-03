@@ -54,6 +54,8 @@ func main() {
 	meetingUserMap := make(map[string][]string)
 	meetingProjectMap := make(map[string][]string)
 	tagMap := initializeTags()
+	meetingItemMap := make(map[string]*model.MeetingItem)
+	meetingNoteMap := make(map[string]*model.MeetingNote)
 
 	userServiceInmem := inmem.NewUserServiceInmem(
 		usersMap,
@@ -79,6 +81,8 @@ func main() {
 		meetingUserMap,
 		meetingProjectMap,
 		tagMap,
+		meetingItemMap,
+		meetingNoteMap,
 	)
 
 	tagServiceInmem := inmem.NewTagServiceInmem(tagMap)
