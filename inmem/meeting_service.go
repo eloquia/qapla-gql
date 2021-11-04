@@ -133,10 +133,8 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 	ns := time.Duration(-datetime.Nanosecond())
 
 	start := datetime.Add(hInMs).Add(mInMs).Add(sInMs).Add(ns)
-	log.Printf("start %+v", start)
 
 	end := start.Add(time.Hour * time.Duration(24)).Add(-1)
-	log.Printf("end %+v", end)
 
 	var meetings []*model.MeetingDetails
 
