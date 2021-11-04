@@ -60,13 +60,11 @@ type MeetingNote struct {
 }
 
 type MeetingNoteInput struct {
-	ID        *string                `json:"id"`
-	About     string                 `json:"about"`
-	Author    string                 `json:"author"`
-	Text      string                 `json:"text"`
-	Tags      []*MeetingNoteTagInput `json:"tags"`
-	CreatedAt time.Time              `json:"createdAt"`
-	UpdatedAt time.Time              `json:"updatedAt"`
+	ID     *string                `json:"id"`
+	About  string                 `json:"about"`
+	Author string                 `json:"author"`
+	Text   string                 `json:"text"`
+	Tags   []*MeetingNoteTagInput `json:"tags"`
 }
 
 type MeetingNoteTag struct {

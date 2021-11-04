@@ -1065,8 +1065,6 @@ input MeetingNoteInput {
   author: String!
   text: String!
   tags: [MeetingNoteTagInput]
-  createdAt: Time!
-  updatedAt: Time!
 }
 
 type MeetingNote {
@@ -5722,22 +5720,6 @@ func (ec *executionContext) unmarshalInputMeetingNoteInput(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
 			it.Tags, err = ec.unmarshalOMeetingNoteTagInput2ᚕᚖqaplagqlᚋgraphᚋmodelᚐMeetingNoteTagInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "createdAt":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
-			it.CreatedAt, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "updatedAt":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
-			it.UpdatedAt, err = ec.unmarshalNTime2timeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}

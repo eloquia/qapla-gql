@@ -139,8 +139,6 @@ input MeetingNoteInput {
   author: String!
   text: String!
   tags: [MeetingNoteTagInput]
-  createdAt: Time!
-  updatedAt: Time!
 }
 
 type MeetingNote {
