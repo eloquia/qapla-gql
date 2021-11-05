@@ -68,6 +68,7 @@ type ComplexityRoot struct {
 		ActualAttendanceStatus  func(childComplexity int) int
 		AttendanceReason        func(childComplexity int) int
 		ID                      func(childComplexity int) int
+		MeetingID               func(childComplexity int) int
 		Notes                   func(childComplexity int) int
 		Personnel               func(childComplexity int) int
 		PlannedAttendanceStatus func(childComplexity int) int
@@ -324,6 +325,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MeetingItem.ID(childComplexity), true
+
+	case "MeetingItem.meetingID":
+		if e.complexity.MeetingItem.MeetingID == nil {
+			break
+		}
+
+		return e.complexity.MeetingItem.MeetingID(childComplexity), true
 
 	case "MeetingItem.notes":
 		if e.complexity.MeetingItem.Notes == nil {
@@ -1088,6 +1096,7 @@ input MeetingItemInput {
 
 type MeetingItem {
   id: String!
+  meetingID: String!
   personnel: User!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
@@ -1981,6 +1990,41 @@ func (ec *executionContext) _MeetingItem_id(ctx context.Context, field graphql.C
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _MeetingItem_meetingID(ctx context.Context, field graphql.CollectedField, obj *model.MeetingItem) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "MeetingItem",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MeetingID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6386,6 +6430,11 @@ func (ec *executionContext) _MeetingItem(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("MeetingItem")
 		case "id":
 			out.Values[i] = ec._MeetingItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "meetingID":
+			out.Values[i] = ec._MeetingItem_meetingID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

@@ -27,6 +27,7 @@ type MeetingDetails struct {
 
 type MeetingItem struct {
 	ID                      string         `json:"id"`
+	MeetingID               string         `json:"meetingID"`
 	Personnel               *User          `json:"personnel"`
 	PlannedAttendanceStatus string         `json:"plannedAttendanceStatus"`
 	ActualAttendanceStatus  string         `json:"actualAttendanceStatus"`

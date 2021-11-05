@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -8,6 +9,8 @@ import (
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 	"qaplagql/inmem"
+	"qaplagql/seequell"
+	"qaplagql/services"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -39,11 +42,91 @@ func main() {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - -
 		Using dependency injection:
-		1. Create inmem or Postgres datasources
-		2. Create services composed of those datasources
-		3. Provide services to service
+		1. Create inmem/MongoDB datasource
+		2. Create services composed of that datasource
+		3. Provide services to server
 	- - - - - - - - - - - - - - - - - - - - - - - - - - */
+	var userService services.UserService
+	var projectService services.ProjectService
+	var authService services.AuthService
+	var meetingService services.MeetingService
+	var tagService services.TagService
+	var err error
 
+	datasourceType := os.Args[1]
+	switch datasourceType {
+	case "inmem":
+		log.Printf("Starting in-memory data services")
+		userService, projectService, authService, meetingService, tagService, err = initializeInmemServices()
+		if err != nil {
+			log.Fatalf("Unable to initialize inmem services")
+		}
+	case "mongodb", "mongo":
+		log.Fatalf("MongoDB not currently supported")
+	case "postgres", "postgresql":
+		log.Printf("Starting Postgres data services")
+	default:
+		log.Fatalf("Unknown datasource type: %+s", datasourceType)
+	}
+
+	/* - - - - - - - - -
+			Set up server
+	- - - - - - - - - - */
+
+	srv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(
+			generated.Config{Resolvers: &graph.Resolver{
+				UserService:    userService,
+				ProjectService: projectService,
+				AuthService:    authService,
+				MeetingService: meetingService,
+				TagService:     tagService,
+			}}))
+
+	srv.AddTransport(&transport.Websocket{
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				// Check against your desired domains here
+				return r.Host == "*"
+			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+		},
+	})
+
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
+
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, router))
+}
+
+/* - - - - - - - - - - - - - - - - -
+								MongoDB
+- - - - - - - - - - - - - - - - - */
+
+func initializeSqlServices() (services.UserService, services.ProjectService, services.AuthService, services.MeetingService, services.TagService, error) {
+	db, err := sql.Open("postgres", "user=pqgotest dbname=pqgotest sslmode=verify-full")
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	queries := seequell.New(db)
+
+	userService := seequell.NewUserService(db, queries)
+	projectService := seequell.NewProjectService(db, queries)
+	authService := seequell.NewAuthService(db, queries)
+	meetingService := seequell.NewMeetingService(db, queries)
+	tagService := seequell.NewTagService(db, queries)
+
+	return userService, projectService, authService, meetingService, tagService, nil
+}
+
+/* - - - - - - - - - - - - - - - - -
+							In-memory
+- - - - - - - - - - - - - - - - - */
+
+func initializeInmemServices() (services.UserService, services.ProjectService, services.AuthService, services.MeetingService, services.TagService, error) {
 	usersMap := initializeUsers()
 	projectMap := initializeProjects()
 	projectUserMap := make(map[string][]string)
@@ -87,36 +170,7 @@ func main() {
 
 	tagServiceInmem := inmem.NewTagServiceInmem(tagMap)
 
-	/* - - - - - - - - -
-			Set up server
-	- - - - - - - - - - */
-
-	srv := handler.NewDefaultServer(
-		generated.NewExecutableSchema(
-			generated.Config{Resolvers: &graph.Resolver{
-				UserService:    userServiceInmem,
-				ProjectService: projectServiceInmem,
-				AuthService:    authServiceInmem,
-				MeetingService: meetingServiceInmem,
-				TagService:     tagServiceInmem,
-			}}))
-
-	srv.AddTransport(&transport.Websocket{
-		Upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				// Check against your desired domains here
-				return r.Host == "*"
-			},
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-		},
-	})
-
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	return userServiceInmem, projectServiceInmem, authServiceInmem, meetingServiceInmem, tagServiceInmem, nil
 }
 
 func initializeUsers() map[string]*model.User {

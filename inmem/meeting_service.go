@@ -140,6 +140,12 @@ func (meetingService *MeetingServiceInmem) GetByDate(ctx context.Context, dateti
 
 	for _, meeting := range meetingService.meetings {
 
+		// fetch meetingItems
+		// var meetingItems []*model.MeetingItem
+		// for meetingItemId, mi := range(meetingService.meetingItems) {
+		// 	if mi.
+		// }
+
 		if meeting.StartTime.After(start) && meeting.StartTime.Before(end) {
 			meet := &model.MeetingDetails{
 				ID:              meeting.ID,
@@ -210,6 +216,32 @@ func (ms *MeetingServiceInmem) UpdatePersonMeeting(ctx context.Context, input mo
 }
 
 func (ms *MeetingServiceInmem) UpdateMeetingItem(ctx context.Context, input model.UpdateMeetingItemRequest) (*model.MeetingItem, error) {
+	log.Printf("Attempting to update meetingItem: %+v", input)
+	// check to see if ID exists
+	if input.ID == "" {
+		return &model.MeetingItem{}, errors.New("Meeting Item ID not defined--refusing to create new Meeting Note Item")
+	}
 
-	return &model.MeetingItem{}, nil
+	// check to see if the meeting note exists; it is okay if it does not exist
+	foundMeetingItem := ms.meetingItems[input.ID]
+
+	foundMeetingItem.ActualAttendanceStatus = input.ActualAttendanceStatus
+	foundMeetingItem.PlannedAttendanceStatus = input.PlannedAttendanceStatus
+	foundMeetingItem.AttendanceReason = &input.AttendanceReason
+	var notes []*model.MeetingNote
+	for i := 0; i < len(input.Notes); i++ {
+		n := input.Notes[i]
+		note := &model.MeetingNote{
+			ID: *n.ID,
+			// TODO: finish this
+		}
+
+		notes = append(notes, note)
+	}
+	foundMeetingItem.Notes = notes
+
+	// reassign
+	ms.meetingItems[input.ID] = foundMeetingItem
+
+	return foundMeetingItem, nil
 }

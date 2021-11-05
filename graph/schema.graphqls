@@ -162,6 +162,7 @@ input MeetingItemInput {
 
 type MeetingItem {
   id: String!
+  meetingID: String!
   personnel: User!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
