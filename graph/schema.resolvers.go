@@ -72,7 +72,7 @@ func (r *queryResolver) GetUserByID(ctx context.Context, id int) (*model.UserDet
 }
 
 func (r *queryResolver) IsEmailInUse(ctx context.Context, email string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.UserService.IsEmailInUse(ctx, email)
 }
 
 func (r *queryResolver) ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error) {
