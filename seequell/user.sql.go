@@ -159,6 +159,19 @@ func (q *Queries) GetUserDetails(ctx context.Context, userID int64) (GetUserDeta
 	return i, err
 }
 
+const isEmailInUse = `-- name: IsEmailInUse :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.users WHERE email = $1
+)
+`
+
+func (q *Queries) IsEmailInUse(ctx context.Context, email string) (bool, error) {
+	row := q.queryRow(ctx, q.isEmailInUseStmt, isEmailInUse, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT user_id, first_name, last_name, email, created_at, updated_at FROM core_qapla.users
 ORDER BY last_name

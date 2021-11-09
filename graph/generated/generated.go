@@ -147,6 +147,7 @@ type ComplexityRoot struct {
 	Query struct {
 		GetProjectByID   func(childComplexity int, id int) int
 		GetUserByID      func(childComplexity int, id int) int
+		IsEmailInUse     func(childComplexity int, email string) int
 		MeetingByID      func(childComplexity int, id int) int
 		MeetingsByDate   func(childComplexity int, date time.Time) int
 		ProjectDetails   func(childComplexity int, slug string) int
@@ -202,6 +203,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.UserDetailsShort, error)
 	GetUserByID(ctx context.Context, id int) (*model.UserDetails, error)
+	IsEmailInUse(ctx context.Context, email string) (bool, error)
 	ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
 	GetProjectByID(ctx context.Context, id int) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
@@ -783,6 +785,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetUserByID(childComplexity, args["id"].(int)), true
 
+	case "Query.isEmailInUse":
+		if e.complexity.Query.IsEmailInUse == nil {
+			break
+		}
+
+		args, err := ec.field_Query_isEmailInUse_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.IsEmailInUse(childComplexity, args["email"].(string)), true
+
 	case "Query.meetingById":
 		if e.complexity.Query.MeetingByID == nil {
 			break
@@ -1320,6 +1334,7 @@ type Query {
   # # #
   users: [UserDetailsShort]!
   getUserById(id: Int!): UserDetails!
+  isEmailInUse(email: String!): Boolean!
 
   # # #
   # # # Project
@@ -1604,6 +1619,21 @@ func (ec *executionContext) field_Query_getUserById_args(ctx context.Context, ra
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_isEmailInUse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
 	return args, nil
 }
 
@@ -4156,6 +4186,48 @@ func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphq
 	res := resTmp.(*model.UserDetails)
 	fc.Result = res
 	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_isEmailInUse(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_isEmailInUse_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().IsEmailInUse(rctx, args["email"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectListItems(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7582,6 +7654,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserById(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "isEmailInUse":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_isEmailInUse(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

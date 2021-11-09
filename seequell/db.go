@@ -52,11 +52,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserDetailsStmt, err = db.PrepareContext(ctx, getUserDetails); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserDetails: %w", err)
 	}
+	if q.isEmailInUseStmt, err = db.PrepareContext(ctx, isEmailInUse); err != nil {
+		return nil, fmt.Errorf("error preparing query IsEmailInUse: %w", err)
+	}
 	if q.listUsersStmt, err = db.PrepareContext(ctx, listUsers); err != nil {
 		return nil, fmt.Errorf("error preparing query ListUsers: %w", err)
 	}
-	if q.projectExistsStmt, err = db.PrepareContext(ctx, projectExists); err != nil {
-		return nil, fmt.Errorf("error preparing query ProjectExists: %w", err)
+	if q.projectExistsByIdStmt, err = db.PrepareContext(ctx, projectExistsById); err != nil {
+		return nil, fmt.Errorf("error preparing query ProjectExistsById: %w", err)
+	}
+	if q.projectExistsBySlugStmt, err = db.PrepareContext(ctx, projectExistsBySlug); err != nil {
+		return nil, fmt.Errorf("error preparing query ProjectExistsBySlug: %w", err)
 	}
 	if q.updateProjectStmt, err = db.PrepareContext(ctx, updateProject); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateProject: %w", err)
@@ -119,14 +125,24 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserDetailsStmt: %w", cerr)
 		}
 	}
+	if q.isEmailInUseStmt != nil {
+		if cerr := q.isEmailInUseStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing isEmailInUseStmt: %w", cerr)
+		}
+	}
 	if q.listUsersStmt != nil {
 		if cerr := q.listUsersStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listUsersStmt: %w", cerr)
 		}
 	}
-	if q.projectExistsStmt != nil {
-		if cerr := q.projectExistsStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing projectExistsStmt: %w", cerr)
+	if q.projectExistsByIdStmt != nil {
+		if cerr := q.projectExistsByIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing projectExistsByIdStmt: %w", cerr)
+		}
+	}
+	if q.projectExistsBySlugStmt != nil {
+		if cerr := q.projectExistsBySlugStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing projectExistsBySlugStmt: %w", cerr)
 		}
 	}
 	if q.updateProjectStmt != nil {
@@ -188,8 +204,10 @@ type Queries struct {
 	getProjectBySlugStmt    *sql.Stmt
 	getUserStmt             *sql.Stmt
 	getUserDetailsStmt      *sql.Stmt
+	isEmailInUseStmt        *sql.Stmt
 	listUsersStmt           *sql.Stmt
-	projectExistsStmt       *sql.Stmt
+	projectExistsByIdStmt   *sql.Stmt
+	projectExistsBySlugStmt *sql.Stmt
 	updateProjectStmt       *sql.Stmt
 	userExistsStmt          *sql.Stmt
 }
@@ -208,8 +226,10 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getProjectBySlugStmt:    q.getProjectBySlugStmt,
 		getUserStmt:             q.getUserStmt,
 		getUserDetailsStmt:      q.getUserDetailsStmt,
+		isEmailInUseStmt:        q.isEmailInUseStmt,
 		listUsersStmt:           q.listUsersStmt,
-		projectExistsStmt:       q.projectExistsStmt,
+		projectExistsByIdStmt:   q.projectExistsByIdStmt,
+		projectExistsBySlugStmt: q.projectExistsBySlugStmt,
 		updateProjectStmt:       q.updateProjectStmt,
 		userExistsStmt:          q.userExistsStmt,
 	}

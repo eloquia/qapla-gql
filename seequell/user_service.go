@@ -135,3 +135,14 @@ func (us *UserServiceSql) AddUserDetails(ctx context.Context, input model.UserDe
 	detailedDomain := ToUserDetailsDomain(deets)
 	return detailedDomain, nil
 }
+
+func (us *UserServiceSql) IsEmailInUse(ctx context.Context, email string) (bool, error) {
+	log.Printf("[DEBUG] IsEmailInUse")
+
+	isInUse, err := us.queries.IsEmailInUse(ctx, email)
+	if err != nil {
+		return true, err
+	}
+
+	return isInUse, nil
+}

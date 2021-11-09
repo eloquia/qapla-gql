@@ -14,4 +14,5 @@ type UserService interface {
 	GetAllShortUserDetails(ctx context.Context) ([]*model.UserDetailsShort, error)
 	AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error)
 	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
+	IsEmailInUse(ctx context.Context, email string) (bool, error)
 }

@@ -31,7 +31,7 @@ func (ps *ProjectServiceSql) GetAll(ctx context.Context) ([]*model.ProjectDetail
 func (ps *ProjectServiceSql) GetById(ctx context.Context, id int) (*model.Project, error) {
 	log.Printf("[DEBUG] GetProjectDetails")
 
-	exists, err := ps.queries.ProjectExists(ctx, int64(id))
+	exists, err := ps.queries.ProjectExistsById(ctx, int64(id))
 	if err != nil {
 		return &model.Project{}, err
 	}

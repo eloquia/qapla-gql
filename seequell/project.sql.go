@@ -128,14 +128,27 @@ func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (CoreQaplaP
 	return i, err
 }
 
-const projectExists = `-- name: ProjectExists :one
+const projectExistsById = `-- name: ProjectExistsById :one
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.projects WHERE project_id = $1
 )
 `
 
-func (q *Queries) ProjectExists(ctx context.Context, projectID int64) (bool, error) {
-	row := q.queryRow(ctx, q.projectExistsStmt, projectExists, projectID)
+func (q *Queries) ProjectExistsById(ctx context.Context, projectID int64) (bool, error) {
+	row := q.queryRow(ctx, q.projectExistsByIdStmt, projectExistsById, projectID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const projectExistsBySlug = `-- name: ProjectExistsBySlug :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.projects WHERE slug = $1
+)
+`
+
+func (q *Queries) ProjectExistsBySlug(ctx context.Context, slug string) (bool, error) {
+	row := q.queryRow(ctx, q.projectExistsBySlugStmt, projectExistsBySlug, slug)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
