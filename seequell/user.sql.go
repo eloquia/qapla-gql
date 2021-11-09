@@ -242,6 +242,52 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (CoreQap
 	return i, err
 }
 
+const updateUserDetails = `-- name: UpdateUserDetails :one
+UPDATE core_qapla.user_details
+SET middle_name = $2,
+    goes_by = $3,
+    gender = $4,
+    ethnicity = $5, 
+    position = $6,
+    institution = $7
+WHERE user_detail_id = $1
+RETURNING user_detail_id, user_id, middle_name, goes_by, gender, ethnicity, position, institution
+`
+
+type UpdateUserDetailsParams struct {
+	UserDetailID int64          `json:"user_detail_id"`
+	MiddleName   sql.NullString `json:"middle_name"`
+	GoesBy       sql.NullString `json:"goes_by"`
+	Gender       sql.NullString `json:"gender"`
+	Ethnicity    sql.NullString `json:"ethnicity"`
+	Position     sql.NullString `json:"position"`
+	Institution  sql.NullString `json:"institution"`
+}
+
+func (q *Queries) UpdateUserDetails(ctx context.Context, arg UpdateUserDetailsParams) (CoreQaplaUserDetail, error) {
+	row := q.queryRow(ctx, q.updateUserDetailsStmt, updateUserDetails,
+		arg.UserDetailID,
+		arg.MiddleName,
+		arg.GoesBy,
+		arg.Gender,
+		arg.Ethnicity,
+		arg.Position,
+		arg.Institution,
+	)
+	var i CoreQaplaUserDetail
+	err := row.Scan(
+		&i.UserDetailID,
+		&i.UserID,
+		&i.MiddleName,
+		&i.GoesBy,
+		&i.Gender,
+		&i.Ethnicity,
+		&i.Position,
+		&i.Institution,
+	)
+	return i, err
+}
+
 const userExists = `-- name: UserExists :one
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE user_id = $1

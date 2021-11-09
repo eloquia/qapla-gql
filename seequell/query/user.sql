@@ -68,8 +68,5 @@ SET middle_name = $2,
     ethnicity = $5, 
     position = $6,
     institution = $7
-WHERE user_details_id = (
-  SELECT user_details_id FROM core_qapla.user_details
-  WHERE core_qapla.user_details.user_id = $1
-)
+WHERE user_detail_id = $1
 RETURNING *;

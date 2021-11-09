@@ -24,11 +24,6 @@ type CoreQaplaProject struct {
 }
 
 type CoreQaplaProjectUser struct {
-	ProjectID int64 `json:"project_id"`
-	UserID    int64 `json:"user_id"`
-}
-
-type CoreQaplaProjectUser struct {
 	UserID    int64 `json:"user_id"`
 	ProjectID int64 `json:"project_id"`
 }
