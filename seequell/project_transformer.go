@@ -9,3 +9,12 @@ func ProjectToListItemDomain(project CoreQaplaProject) *model.ProjectListItem {
 		Slug: project.Slug,
 	}
 }
+
+func ProjectToDomain(projectModel CoreQaplaProject) *model.Project {
+	return &model.Project{
+		ID:          int(projectModel.ProjectID),
+		Name:        projectModel.ProjectName,
+		Description: &projectModel.ProjectDesc.String,
+		Slug:        projectModel.Slug,
+	}
+}

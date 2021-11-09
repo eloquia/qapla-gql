@@ -22,3 +22,21 @@ RETURNING *;
 -- name: GetAllProjects :many
 SELECT * FROM core_qapla.projects
 ORDER BY project_name;
+
+-- name: GetProjectById :one
+SELECT * FROM core_qapla.projects
+WHERE project_id = $1;
+
+-- name: ProjectExistsById :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.projects WHERE project_id = $1
+);
+
+-- name: GetProjectBySlug :one
+SELECT * FROM core_qapla.projects
+WHERE slug = $1;
+
+-- name: ProjectExistsBySlug :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.projects WHERE slug = $1
+);

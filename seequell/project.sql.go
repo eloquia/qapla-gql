@@ -90,6 +90,57 @@ func (q *Queries) GetAllProjects(ctx context.Context) ([]CoreQaplaProject, error
 	return items, nil
 }
 
+const getProjectById = `-- name: GetProjectById :one
+SELECT project_id, project_name, project_desc, created_at, updated_at, slug FROM core_qapla.projects
+WHERE project_id = $1
+`
+
+func (q *Queries) GetProjectById(ctx context.Context, projectID int64) (CoreQaplaProject, error) {
+	row := q.queryRow(ctx, q.getProjectByIdStmt, getProjectById, projectID)
+	var i CoreQaplaProject
+	err := row.Scan(
+		&i.ProjectID,
+		&i.ProjectName,
+		&i.ProjectDesc,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Slug,
+	)
+	return i, err
+}
+
+const getProjectBySlug = `-- name: GetProjectBySlug :one
+SELECT project_id, project_name, project_desc, created_at, updated_at, slug FROM core_qapla.projects
+WHERE slug = $1
+`
+
+func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (CoreQaplaProject, error) {
+	row := q.queryRow(ctx, q.getProjectBySlugStmt, getProjectBySlug, slug)
+	var i CoreQaplaProject
+	err := row.Scan(
+		&i.ProjectID,
+		&i.ProjectName,
+		&i.ProjectDesc,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Slug,
+	)
+	return i, err
+}
+
+const projectExists = `-- name: ProjectExists :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.projects WHERE project_id = $1
+)
+`
+
+func (q *Queries) ProjectExists(ctx context.Context, projectID int64) (bool, error) {
+	row := q.queryRow(ctx, q.projectExistsStmt, projectExists, projectID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const updateProject = `-- name: UpdateProject :one
 UPDATE core_qapla.projects
 SET project_name = $2,
