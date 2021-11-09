@@ -25,6 +25,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.addUserDetailsStmt, err = db.PrepareContext(ctx, addUserDetails); err != nil {
 		return nil, fmt.Errorf("error preparing query AddUserDetails: %w", err)
 	}
+	if q.assignUserToProjectStmt, err = db.PrepareContext(ctx, assignUserToProject); err != nil {
+		return nil, fmt.Errorf("error preparing query AssignUserToProject: %w", err)
+	}
+	if q.createProjectStmt, err = db.PrepareContext(ctx, createProject); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateProject: %w", err)
+	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
@@ -40,6 +46,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.listUsersStmt, err = db.PrepareContext(ctx, listUsers); err != nil {
 		return nil, fmt.Errorf("error preparing query ListUsers: %w", err)
 	}
+	if q.updateProjectStmt, err = db.PrepareContext(ctx, updateProject); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateProject: %w", err)
+	}
 	if q.userExistsStmt, err = db.PrepareContext(ctx, userExists); err != nil {
 		return nil, fmt.Errorf("error preparing query UserExists: %w", err)
 	}
@@ -51,6 +60,16 @@ func (q *Queries) Close() error {
 	if q.addUserDetailsStmt != nil {
 		if cerr := q.addUserDetailsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing addUserDetailsStmt: %w", cerr)
+		}
+	}
+	if q.assignUserToProjectStmt != nil {
+		if cerr := q.assignUserToProjectStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing assignUserToProjectStmt: %w", cerr)
+		}
+	}
+	if q.createProjectStmt != nil {
+		if cerr := q.createProjectStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createProjectStmt: %w", cerr)
 		}
 	}
 	if q.createUserStmt != nil {
@@ -76,6 +95,11 @@ func (q *Queries) Close() error {
 	if q.listUsersStmt != nil {
 		if cerr := q.listUsersStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listUsersStmt: %w", cerr)
+		}
+	}
+	if q.updateProjectStmt != nil {
+		if cerr := q.updateProjectStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateProjectStmt: %w", cerr)
 		}
 	}
 	if q.userExistsStmt != nil {
@@ -120,27 +144,33 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                 DBTX
-	tx                 *sql.Tx
-	addUserDetailsStmt *sql.Stmt
-	createUserStmt     *sql.Stmt
-	deleteUserStmt     *sql.Stmt
-	getUserStmt        *sql.Stmt
-	getUserDetailsStmt *sql.Stmt
-	listUsersStmt      *sql.Stmt
-	userExistsStmt     *sql.Stmt
+	db                      DBTX
+	tx                      *sql.Tx
+	addUserDetailsStmt      *sql.Stmt
+	assignUserToProjectStmt *sql.Stmt
+	createProjectStmt       *sql.Stmt
+	createUserStmt          *sql.Stmt
+	deleteUserStmt          *sql.Stmt
+	getUserStmt             *sql.Stmt
+	getUserDetailsStmt      *sql.Stmt
+	listUsersStmt           *sql.Stmt
+	updateProjectStmt       *sql.Stmt
+	userExistsStmt          *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                 tx,
-		tx:                 tx,
-		addUserDetailsStmt: q.addUserDetailsStmt,
-		createUserStmt:     q.createUserStmt,
-		deleteUserStmt:     q.deleteUserStmt,
-		getUserStmt:        q.getUserStmt,
-		getUserDetailsStmt: q.getUserDetailsStmt,
-		listUsersStmt:      q.listUsersStmt,
-		userExistsStmt:     q.userExistsStmt,
+		db:                      tx,
+		tx:                      tx,
+		addUserDetailsStmt:      q.addUserDetailsStmt,
+		assignUserToProjectStmt: q.assignUserToProjectStmt,
+		createProjectStmt:       q.createProjectStmt,
+		createUserStmt:          q.createUserStmt,
+		deleteUserStmt:          q.deleteUserStmt,
+		getUserStmt:             q.getUserStmt,
+		getUserDetailsStmt:      q.getUserDetailsStmt,
+		listUsersStmt:           q.listUsersStmt,
+		updateProjectStmt:       q.updateProjectStmt,
+		userExistsStmt:          q.userExistsStmt,
 	}
 }
