@@ -75,14 +75,6 @@ func (us *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetailsShort
 	return domainUsers, nil
 }
 
-func (us *UserServiceSql) GetAllUserDetails(ctx context.Context) ([]*model.UserDetails, error) {
-	panic("Not yet implemented")
-}
-
-func (u *UserServiceSql) AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error) {
-	panic("Not yet implemented")
-}
-
 func (u *UserServiceSql) GetAllShortUserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
 	panic("Not yet implemented")
 }

@@ -98,7 +98,6 @@ type ComplexityRoot struct {
 		AddUserDetails       func(childComplexity int, input model.UserDetailsInput) int
 		AssignUserToProject  func(childComplexity int, userID int, projectID int) int
 		CreateAuth           func(childComplexity int, input model.NewUserAuth) int
-		CreatePersonnel      func(childComplexity int, input model.NewPersonnel) int
 		CreateProject        func(childComplexity int, input model.NewProject) int
 		CreateProjectMeeting func(childComplexity int, input model.NewProjectMeeting) int
 		CreateUser           func(childComplexity int, input model.NewUser) int
@@ -188,7 +187,6 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetailsShort, error)
 	CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetailsShort, error)
-	CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error)
 	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
 	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
@@ -486,18 +484,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateAuth(childComplexity, args["input"].(model.NewUserAuth)), true
-
-	case "Mutation.createPersonnel":
-		if e.complexity.Mutation.CreatePersonnel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createPersonnel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreatePersonnel(childComplexity, args["input"].(model.NewPersonnel)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -1124,18 +1110,6 @@ input UpdateUser {
   isActive: Boolean!
 }
 
-input NewPersonnel {
-  firstName: String!
-  lastName: String!
-  goesBy: String
-  middleName: String
-  email: String!
-  gender: String
-  ethnicity: String
-  position: String
-  institution: String
-}
-
 # # # # # # # # # # # # # # # # #
 #             Project
 # # # # # # # # # # # # # # # # #
@@ -1303,7 +1277,6 @@ type Mutation {
   # # #
   createUser(input: NewUser!): UserDetailsShort!
   createAuth(input: NewUserAuth!): UserDetailsShort!
-  createPersonnel(input: NewPersonnel!): UserDetailsShort!
   addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
@@ -1410,21 +1383,6 @@ func (ec *executionContext) field_Mutation_createAuth_args(ctx context.Context, 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewUserAuth2qaplagqlᚋgraphᚋmodelᚐNewUserAuth(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createPersonnel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.NewPersonnel
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewPersonnel2qaplagqlᚋgraphᚋmodelᚐNewPersonnel(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2884,48 +2842,6 @@ func (ec *executionContext) _Mutation_createAuth(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateAuth(rctx, args["input"].(model.NewUserAuth))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.UserDetailsShort)
-	fc.Result = res
-	return ec.marshalNUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_createPersonnel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createPersonnel_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreatePersonnel(rctx, args["input"].(model.NewPersonnel))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6451,93 +6367,6 @@ func (ec *executionContext) unmarshalInputMeetingNoteTagInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputNewPersonnel(ctx context.Context, obj interface{}) (model.NewPersonnel, error) {
-	var it model.NewPersonnel
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	for k, v := range asMap {
-		switch k {
-		case "firstName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
-			it.FirstName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "lastName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
-			it.LastName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "goesBy":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goesBy"))
-			it.GoesBy, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "middleName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("middleName"))
-			it.MiddleName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "email":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			it.Email, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "gender":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
-			it.Gender, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "ethnicity":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ethnicity"))
-			it.Ethnicity, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "position":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
-			it.Position, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "institution":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("institution"))
-			it.Institution, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputNewProject(ctx context.Context, obj interface{}) (model.NewProject, error) {
 	var it model.NewProject
 	asMap := map[string]interface{}{}
@@ -7370,11 +7199,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createAuth":
 			out.Values[i] = ec._Mutation_createAuth(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createPersonnel":
-			out.Values[i] = ec._Mutation_createPersonnel(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8343,11 +8167,6 @@ func (ec *executionContext) marshalNMeetingNoteTag2ᚕᚖqaplagqlᚋgraphᚋmode
 	wg.Wait()
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalNNewPersonnel2qaplagqlᚋgraphᚋmodelᚐNewPersonnel(ctx context.Context, v interface{}) (model.NewPersonnel, error) {
-	res, err := ec.unmarshalInputNewPersonnel(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewProject2qaplagqlᚋgraphᚋmodelᚐNewProject(ctx context.Context, v interface{}) (model.NewProject, error) {

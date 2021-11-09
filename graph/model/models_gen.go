@@ -78,18 +78,6 @@ type MeetingNoteTagInput struct {
 	Text string `json:"text"`
 }
 
-type NewPersonnel struct {
-	FirstName   string  `json:"firstName"`
-	LastName    string  `json:"lastName"`
-	GoesBy      *string `json:"goesBy"`
-	MiddleName  *string `json:"middleName"`
-	Email       string  `json:"email"`
-	Gender      *string `json:"gender"`
-	Ethnicity   *string `json:"ethnicity"`
-	Position    *string `json:"position"`
-	Institution *string `json:"institution"`
-}
-
 type NewProject struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`

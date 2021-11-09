@@ -51,3 +51,25 @@ SELECT EXISTS (
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE email = $1
 );
+
+-- name: UpdateUser :one
+UPDATE core_qapla.users
+SET first_name = $2,
+    last_name = $3,
+    email = $4
+WHERE user_id = $1
+RETURNING *;
+
+-- name: UpdateUserDetails :one
+UPDATE core_qapla.user_details
+SET middle_name = $2,
+    goes_by = $3,
+    gender = $4,
+    ethnicity = $5, 
+    position = $6,
+    institution = $7
+WHERE user_details_id = (
+  SELECT user_details_id FROM core_qapla.user_details
+  WHERE core_qapla.user_details.user_id = $1
+)
+RETURNING *;

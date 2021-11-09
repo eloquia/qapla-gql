@@ -19,10 +19,6 @@ func (r *mutationResolver) CreateAuth(ctx context.Context, input model.NewUserAu
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error) {
-	return r.UserService.AddPersonnel(ctx, input)
-}
-
 func (r *mutationResolver) AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error) {
 	return r.UserService.AddUserDetails(ctx, input)
 }

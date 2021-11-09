@@ -207,6 +207,41 @@ func (q *Queries) ListUsers(ctx context.Context) ([]CoreQaplaUser, error) {
 	return items, nil
 }
 
+const updateUser = `-- name: UpdateUser :one
+UPDATE core_qapla.users
+SET first_name = $2,
+    last_name = $3,
+    email = $4
+WHERE user_id = $1
+RETURNING user_id, first_name, last_name, email, created_at, updated_at
+`
+
+type UpdateUserParams struct {
+	UserID    int64  `json:"user_id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (CoreQaplaUser, error) {
+	row := q.queryRow(ctx, q.updateUserStmt, updateUser,
+		arg.UserID,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+	)
+	var i CoreQaplaUser
+	err := row.Scan(
+		&i.UserID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const userExists = `-- name: UserExists :one
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE user_id = $1

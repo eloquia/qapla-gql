@@ -67,6 +67,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateProjectStmt, err = db.PrepareContext(ctx, updateProject); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateProject: %w", err)
 	}
+	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
+	}
 	if q.userExistsStmt, err = db.PrepareContext(ctx, userExists); err != nil {
 		return nil, fmt.Errorf("error preparing query UserExists: %w", err)
 	}
@@ -150,6 +153,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateProjectStmt: %w", cerr)
 		}
 	}
+	if q.updateUserStmt != nil {
+		if cerr := q.updateUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserStmt: %w", cerr)
+		}
+	}
 	if q.userExistsStmt != nil {
 		if cerr := q.userExistsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing userExistsStmt: %w", cerr)
@@ -209,6 +217,7 @@ type Queries struct {
 	projectExistsByIdStmt   *sql.Stmt
 	projectExistsBySlugStmt *sql.Stmt
 	updateProjectStmt       *sql.Stmt
+	updateUserStmt          *sql.Stmt
 	userExistsStmt          *sql.Stmt
 }
 
@@ -231,6 +240,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		projectExistsByIdStmt:   q.projectExistsByIdStmt,
 		projectExistsBySlugStmt: q.projectExistsBySlugStmt,
 		updateProjectStmt:       q.updateProjectStmt,
+		updateUserStmt:          q.updateUserStmt,
 		userExistsStmt:          q.userExistsStmt,
 	}
 }

@@ -1,1 +1,0 @@
-DROP TABLE core_qapla.project_users;

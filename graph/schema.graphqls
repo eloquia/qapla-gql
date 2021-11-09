@@ -71,18 +71,6 @@ input UpdateUser {
   isActive: Boolean!
 }
 
-input NewPersonnel {
-  firstName: String!
-  lastName: String!
-  goesBy: String
-  middleName: String
-  email: String!
-  gender: String
-  ethnicity: String
-  position: String
-  institution: String
-}
-
 # # # # # # # # # # # # # # # # #
 #             Project
 # # # # # # # # # # # # # # # # #
@@ -250,7 +238,6 @@ type Mutation {
   # # #
   createUser(input: NewUser!): UserDetailsShort!
   createAuth(input: NewUserAuth!): UserDetailsShort!
-  createPersonnel(input: NewPersonnel!): UserDetailsShort!
   addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
