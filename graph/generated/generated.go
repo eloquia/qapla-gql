@@ -95,6 +95,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddUserDetails       func(childComplexity int, input model.UserDetailsInput) int
 		AssignUserToProject  func(childComplexity int, userID int, projectID int) int
 		CreateAuth           func(childComplexity int, input model.NewUserAuth) int
 		CreatePersonnel      func(childComplexity int, input model.NewPersonnel) int
@@ -152,7 +153,6 @@ type ComplexityRoot struct {
 		ProjectDetailsList func(childComplexity int) int
 		ProjectListItems   func(childComplexity int) int
 		Tags               func(childComplexity int) int
-		UserDetails        func(childComplexity int) int
 		Users              func(childComplexity int) int
 	}
 
@@ -165,9 +165,15 @@ type ComplexityRoot struct {
 	UserDetails struct {
 		AssignedProjects func(childComplexity int) int
 		Email            func(childComplexity int) int
+		Ethnicity        func(childComplexity int) int
 		FirstName        func(childComplexity int) int
+		Gender           func(childComplexity int) int
+		GoesBy           func(childComplexity int) int
 		ID               func(childComplexity int) int
+		Institution      func(childComplexity int) int
 		LastName         func(childComplexity int) int
+		MiddleName       func(childComplexity int) int
+		Position         func(childComplexity int) int
 	}
 
 	UserDetailsShort struct {
@@ -180,9 +186,10 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error)
-	CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetails, error)
-	CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error)
+	CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetailsShort, error)
+	CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetailsShort, error)
+	CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error)
+	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
 	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
 	UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error)
@@ -194,8 +201,7 @@ type MutationResolver interface {
 	UpdateMeetingItem(ctx context.Context, input model.UpdateMeetingItemRequest) (*model.MeetingItem, error)
 }
 type QueryResolver interface {
-	Users(ctx context.Context) ([]*model.UserDetails, error)
-	UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error)
+	Users(ctx context.Context) ([]*model.UserDetailsShort, error)
 	GetUserByID(ctx context.Context, id int) (*model.UserDetails, error)
 	ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
 	GetProjectByID(ctx context.Context, id int) (*model.Project, error)
@@ -444,6 +450,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MeetingNoteTag.Text(childComplexity), true
+
+	case "Mutation.addUserDetails":
+		if e.complexity.Mutation.AddUserDetails == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addUserDetails_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddUserDetails(childComplexity, args["input"].(model.UserDetailsInput)), true
 
 	case "Mutation.assignUserToProject":
 		if e.complexity.Mutation.AssignUserToProject == nil {
@@ -824,13 +842,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Tags(childComplexity), true
 
-	case "Query.userDetails":
-		if e.complexity.Query.UserDetails == nil {
-			break
-		}
-
-		return e.complexity.Query.UserDetails(childComplexity), true
-
 	case "Query.users":
 		if e.complexity.Query.Users == nil {
 			break
@@ -873,12 +884,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserDetails.Email(childComplexity), true
 
+	case "UserDetails.ethnicity":
+		if e.complexity.UserDetails.Ethnicity == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.Ethnicity(childComplexity), true
+
 	case "UserDetails.firstName":
 		if e.complexity.UserDetails.FirstName == nil {
 			break
 		}
 
 		return e.complexity.UserDetails.FirstName(childComplexity), true
+
+	case "UserDetails.gender":
+		if e.complexity.UserDetails.Gender == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.Gender(childComplexity), true
+
+	case "UserDetails.goesBy":
+		if e.complexity.UserDetails.GoesBy == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.GoesBy(childComplexity), true
 
 	case "UserDetails.id":
 		if e.complexity.UserDetails.ID == nil {
@@ -887,12 +919,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserDetails.ID(childComplexity), true
 
+	case "UserDetails.institution":
+		if e.complexity.UserDetails.Institution == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.Institution(childComplexity), true
+
 	case "UserDetails.lastName":
 		if e.complexity.UserDetails.LastName == nil {
 			break
 		}
 
 		return e.complexity.UserDetails.LastName(childComplexity), true
+
+	case "UserDetails.middleName":
+		if e.complexity.UserDetails.MiddleName == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.MiddleName(childComplexity), true
+
+	case "UserDetails.position":
+		if e.complexity.UserDetails.Position == nil {
+			break
+		}
+
+		return e.complexity.UserDetails.Position(childComplexity), true
 
 	case "UserDetailsShort.assignedProjects":
 		if e.complexity.UserDetailsShort.AssignedProjects == nil {
@@ -1022,7 +1075,23 @@ type UserDetails {
   firstName: String!
   lastName: String!
   email: String!
+  goesBy: String
+  middleName: String
+  gender: String
+  ethnicity: String
+  position: String
+  institution: String
   assignedProjects: [Project]
+}
+
+input UserDetailsInput {
+  userId: Int!
+  goesBy: String
+  middleName: String
+  gender: String
+  ethnicity: String
+  position: String
+  institution: String
 }
 
 input NewUser {
@@ -1227,9 +1296,10 @@ type Mutation {
   # # #
   # # # User
   # # #
-  createUser(input: NewUser!): UserDetails!
-  createAuth(input: NewUserAuth!): UserDetails!
-  createPersonnel(input: NewPersonnel!): UserDetails!
+  createUser(input: NewUser!): UserDetailsShort!
+  createAuth(input: NewUserAuth!): UserDetailsShort!
+  createPersonnel(input: NewPersonnel!): UserDetailsShort!
+  addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
   # # #
@@ -1257,8 +1327,7 @@ type Query {
   # # #
   # # # User
   # # #
-  users: [UserDetails]!
-  userDetails: [UserDetailsShort]!
+  users: [UserDetailsShort]!
   getUserById(id: Int!): UserDetails!
 
   # # #
@@ -1289,6 +1358,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addUserDetails_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UserDetailsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUserDetailsInput2qaplagqlᚋgraphᚋmodelᚐUserDetailsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_assignUserToProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -2749,9 +2833,9 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.UserDetails)
+	res := resTmp.(*model.UserDetailsShort)
 	fc.Result = res
-	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+	return ec.marshalNUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createAuth(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2791,9 +2875,9 @@ func (ec *executionContext) _Mutation_createAuth(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.UserDetails)
+	res := resTmp.(*model.UserDetailsShort)
 	fc.Result = res
-	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+	return ec.marshalNUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createPersonnel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2822,6 +2906,48 @@ func (ec *executionContext) _Mutation_createPersonnel(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreatePersonnel(rctx, args["input"].(model.NewPersonnel))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserDetailsShort)
+	fc.Result = res
+	return ec.marshalNUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_addUserDetails(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addUserDetails_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddUserDetails(rctx, args["input"].(model.UserDetailsInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3995,41 +4121,6 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserDetails)
-	fc.Result = res
-	return ec.marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_userDetails(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserDetails(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
 	res := resTmp.([]*model.UserDetailsShort)
 	fc.Result = res
 	return ec.marshalNUserDetailsShort2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
@@ -4664,6 +4755,198 @@ func (ec *executionContext) _UserDetails_email(ctx context.Context, field graphq
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_goesBy(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GoesBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_middleName(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MiddleName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_gender(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Gender, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_ethnicity(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ethnicity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_position(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Position, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetails_institution(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Institution, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserDetails_assignedProjects(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
@@ -6691,6 +6974,77 @@ func (ec *executionContext) unmarshalInputUpdatedPeopleMeetingDetails(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUserDetailsInput(ctx context.Context, obj interface{}) (model.UserDetailsInput, error) {
+	var it model.UserDetailsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "userId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "goesBy":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goesBy"))
+			it.GoesBy, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "middleName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("middleName"))
+			it.MiddleName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gender":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+			it.Gender, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ethnicity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ethnicity"))
+			it.Ethnicity, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "position":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			it.Position, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "institution":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("institution"))
+			it.Institution, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -6997,6 +7351,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "addUserDetails":
+			out.Values[i] = ec._Mutation_addUserDetails(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateUser":
 			out.Values[i] = ec._Mutation_updateUser(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -7259,20 +7618,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "userDetails":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_userDetails(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "getUserById":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7468,6 +7813,18 @@ func (ec *executionContext) _UserDetails(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "goesBy":
+			out.Values[i] = ec._UserDetails_goesBy(ctx, field, obj)
+		case "middleName":
+			out.Values[i] = ec._UserDetails_middleName(ctx, field, obj)
+		case "gender":
+			out.Values[i] = ec._UserDetails_gender(ctx, field, obj)
+		case "ethnicity":
+			out.Values[i] = ec._UserDetails_ethnicity(ctx, field, obj)
+		case "position":
+			out.Values[i] = ec._UserDetails_position(ctx, field, obj)
+		case "institution":
+			out.Values[i] = ec._UserDetails_institution(ctx, field, obj)
 		case "assignedProjects":
 			out.Values[i] = ec._UserDetails_assignedProjects(ctx, field, obj)
 		default:
@@ -8221,44 +8578,6 @@ func (ec *executionContext) marshalNUserDetails2qaplagqlᚋgraphᚋmodelᚐUserD
 	return ec._UserDetails(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetails) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8267,6 +8586,15 @@ func (ec *executionContext) marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUs
 		return graphql.Null
 	}
 	return ec._UserDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserDetailsInput2qaplagqlᚋgraphᚋmodelᚐUserDetailsInput(ctx context.Context, v interface{}) (model.UserDetailsInput, error) {
+	res, err := ec.unmarshalInputUserDetailsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserDetailsShort2qaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v model.UserDetailsShort) graphql.Marshaler {
+	return ec._UserDetailsShort(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUserDetailsShort2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetailsShort) graphql.Marshaler {
@@ -8305,6 +8633,16 @@ func (ec *executionContext) marshalNUserDetailsShort2ᚕᚖqaplagqlᚋgraphᚋmo
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) marshalNUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v *model.UserDetailsShort) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._UserDetailsShort(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -9001,13 +9339,6 @@ func (ec *executionContext) marshalOUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx 
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UserDetails(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v *model.UserDetailsShort) graphql.Marshaler {

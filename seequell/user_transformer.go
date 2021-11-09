@@ -2,10 +2,23 @@ package seequell
 
 import "qaplagql/graph/model"
 
-func UserToDomain(user CoreQaplaUser) *model.UserDetails {
-	return &model.UserDetails{
+func UserToShortDomain(user CoreQaplaUser) *model.UserDetailsShort {
+	return &model.UserDetailsShort{
 		ID:        int(user.UserID),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 	}
+}
+
+func UserToDetailedDomain(user GetUserDetailsRow) *model.UserDetails {
+	return &model.UserDetails{
+		ID:        int(user.UserID),
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+	}
+}
+
+func ToUserDetailsDomain(userDetails CoreQaplaUserDetail) *model.UserDetails {
+	return &model.UserDetails{}
 }

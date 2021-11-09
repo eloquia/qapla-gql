@@ -3,6 +3,7 @@ package seequell
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"qaplagql/graph/model"
 )
@@ -19,8 +20,8 @@ func NewUserService(client *sql.DB, queries *Queries) *UserServiceSql {
 	}
 }
 
-func (us *UserServiceSql) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error) {
-	log.Printf("[DEBUG] CreateUsers")
+func (us *UserServiceSql) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetailsShort, error) {
+	log.Printf("[DEBUG] CreateUser")
 
 	arg := CreateUserParams{
 		FirstName: input.FirstName,
@@ -29,26 +30,26 @@ func (us *UserServiceSql) CreateUser(ctx context.Context, input model.NewUser) (
 	}
 	user, err := us.queries.CreateUser(ctx, arg)
 	if err != nil {
-		return &model.UserDetails{}, err
+		return &model.UserDetailsShort{}, err
 	}
 
 	// transform
-	u := UserToDomain(user)
+	u := UserToShortDomain(user)
 
 	return u, nil
 }
 
 func (us *UserServiceSql) GetById(ctx context.Context, id int) (*model.UserDetails, error) {
-	log.Printf("[DEBUG] GetAll Users")
+	log.Printf("[DEBUG] Get User By ID")
 
 	id64 := int64(id)
 
-	modelUser, err := us.queries.GetUser(ctx, id64)
+	modelUser, err := us.queries.GetUserDetails(ctx, id64)
 	if err != nil {
 		return &model.UserDetails{}, err
 	}
 
-	domainUser := UserToDomain(modelUser)
+	domainUser := UserToDetailedDomain(modelUser)
 
 	return domainUser, nil
 }
@@ -57,17 +58,17 @@ func (us *UserServiceSql) UpdateUser(ctx context.Context, input *model.UpdateUse
 	panic("Not yet implemented")
 }
 
-func (us *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetails, error) {
+func (us *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetailsShort, error) {
 	log.Printf("[DEBUG] GetAll Users")
 
 	modelUsers, err := us.queries.ListUsers(ctx)
 	if err != nil {
-		return []*model.UserDetails{}, err
+		return []*model.UserDetailsShort{}, err
 	}
 
-	var domainUsers []*model.UserDetails
+	var domainUsers []*model.UserDetailsShort
 	for _, modelUser := range modelUsers {
-		domainUser := UserToDomain(modelUser)
+		domainUser := UserToShortDomain(modelUser)
 		domainUsers = append(domainUsers, domainUser)
 	}
 
@@ -78,10 +79,59 @@ func (us *UserServiceSql) GetAllUserDetails(ctx context.Context) ([]*model.UserD
 	panic("Not yet implemented")
 }
 
-func (u *UserServiceSql) AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error) {
+func (u *UserServiceSql) AddPersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error) {
 	panic("Not yet implemented")
 }
 
 func (u *UserServiceSql) GetAllShortUserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
 	panic("Not yet implemented")
+}
+
+func (us *UserServiceSql) AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error) {
+	log.Printf("[DEBUG] Add User Details")
+
+	// check to see if user with ID exists
+	res, err := us.queries.UserExists(ctx, int64(input.UserID))
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+	if !res {
+		return &model.UserDetails{}, errors.New("User with ID does not exist")
+	}
+
+	// user with ID exists, so we can create a new entry
+	params := AddUserDetailsParams{
+		UserID: int64(input.UserID),
+		MiddleName: sql.NullString{
+			Valid:  true,
+			String: *input.MiddleName,
+		},
+		GoesBy: sql.NullString{
+			Valid:  true,
+			String: *input.GoesBy,
+		},
+		Gender: sql.NullString{
+			Valid:  true,
+			String: *input.Gender,
+		},
+		Ethnicity: sql.NullString{
+			Valid:  true,
+			String: *input.Ethnicity,
+		},
+		Position: sql.NullString{
+			Valid:  true,
+			String: *input.Position,
+		},
+		Institution: sql.NullString{
+			Valid:  true,
+			String: *input.Institution,
+		},
+	}
+	deets, err := us.queries.AddUserDetails(ctx, params)
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+
+	detailedDomain := ToUserDetailsDomain(deets)
+	return detailedDomain, nil
 }

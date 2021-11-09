@@ -11,16 +11,20 @@ import (
 	"time"
 )
 
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetailsShort, error) {
 	return r.UserService.CreateUser(ctx, input)
 }
 
-func (r *mutationResolver) CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetails, error) {
+func (r *mutationResolver) CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetailsShort, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error) {
+func (r *mutationResolver) CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetailsShort, error) {
 	return r.UserService.AddPersonnel(ctx, input)
+}
+
+func (r *mutationResolver) AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error) {
+	return r.UserService.AddUserDetails(ctx, input)
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
@@ -59,12 +63,8 @@ func (r *mutationResolver) UpdateMeetingItem(ctx context.Context, input model.Up
 	return r.MeetingService.UpdateMeetingItem(ctx, input)
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*model.UserDetails, error) {
+func (r *queryResolver) Users(ctx context.Context) ([]*model.UserDetailsShort, error) {
 	return r.UserService.GetAll(ctx)
-}
-
-func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
-	return r.UserService.GetAllShortUserDetails(ctx)
 }
 
 func (r *queryResolver) GetUserByID(ctx context.Context, id int) (*model.UserDetails, error) {
@@ -107,3 +107,13 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
+	return r.UserService.GetAllShortUserDetails(ctx)
+}

@@ -203,7 +203,23 @@ type UserDetails struct {
 	FirstName        string     `json:"firstName"`
 	LastName         string     `json:"lastName"`
 	Email            string     `json:"email"`
+	GoesBy           *string    `json:"goesBy"`
+	MiddleName       *string    `json:"middleName"`
+	Gender           *string    `json:"gender"`
+	Ethnicity        *string    `json:"ethnicity"`
+	Position         *string    `json:"position"`
+	Institution      *string    `json:"institution"`
 	AssignedProjects []*Project `json:"assignedProjects"`
+}
+
+type UserDetailsInput struct {
+	UserID      int     `json:"userId"`
+	GoesBy      *string `json:"goesBy"`
+	MiddleName  *string `json:"middleName"`
+	Gender      *string `json:"gender"`
+	Ethnicity   *string `json:"ethnicity"`
+	Position    *string `json:"position"`
+	Institution *string `json:"institution"`
 }
 
 type UserDetailsShort struct {

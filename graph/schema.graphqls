@@ -27,7 +27,23 @@ type UserDetails {
   firstName: String!
   lastName: String!
   email: String!
+  goesBy: String
+  middleName: String
+  gender: String
+  ethnicity: String
+  position: String
+  institution: String
   assignedProjects: [Project]
+}
+
+input UserDetailsInput {
+  userId: Int!
+  goesBy: String
+  middleName: String
+  gender: String
+  ethnicity: String
+  position: String
+  institution: String
 }
 
 input NewUser {
@@ -232,9 +248,10 @@ type Mutation {
   # # #
   # # # User
   # # #
-  createUser(input: NewUser!): UserDetails!
-  createAuth(input: NewUserAuth!): UserDetails!
-  createPersonnel(input: NewPersonnel!): UserDetails!
+  createUser(input: NewUser!): UserDetailsShort!
+  createAuth(input: NewUserAuth!): UserDetailsShort!
+  createPersonnel(input: NewPersonnel!): UserDetailsShort!
+  addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
   # # #
@@ -262,8 +279,7 @@ type Query {
   # # #
   # # # User
   # # #
-  users: [UserDetails]!
-  userDetails: [UserDetailsShort]!
+  users: [UserDetailsShort]!
   getUserById(id: Int!): UserDetails!
 
   # # #
