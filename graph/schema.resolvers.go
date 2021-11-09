@@ -83,10 +83,6 @@ func (r *queryResolver) ProjectDetails(ctx context.Context, slug string) (*model
 	return r.ProjectService.GetProjectDetails(ctx, slug)
 }
 
-func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error) {
-	return r.ProjectService.GetAllProjectDetails(ctx)
-}
-
 func (r *queryResolver) MeetingByID(ctx context.Context, id int) (*model.MeetingDetails, error) {
 	return r.MeetingService.GetById(ctx, id)
 }
@@ -114,6 +110,9 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error) {
+	return r.ProjectService.GetAllProjectDetails(ctx)
+}
 func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
 	return r.UserService.GetAllShortUserDetails(ctx)
 }
