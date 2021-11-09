@@ -2,28 +2,35 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"qaplagql/graph"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
-	"qaplagql/inmem"
 	"qaplagql/seequell"
 	"qaplagql/services"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+
+	_ "github.com/lib/pq"
 )
 
 const defaultPort = "8080"
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -51,20 +58,24 @@ func main() {
 	var authService services.AuthService
 	var meetingService services.MeetingService
 	var tagService services.TagService
-	var err error
 
 	datasourceType := os.Args[1]
 	switch datasourceType {
 	case "inmem":
-		log.Printf("Starting in-memory data services")
-		userService, projectService, authService, meetingService, tagService, err = initializeInmemServices()
-		if err != nil {
-			log.Fatalf("Unable to initialize inmem services")
-		}
+		log.Fatalf("In-memory not currently supported")
+		// log.Printf("Starting in-memory data services")
+		// userService, projectService, authService, meetingService, tagService, err = initializeInmemServices()
+		// if err != nil {
+		// 	log.Fatalf("Unable to initialize inmem services")
+		// }
 	case "mongodb", "mongo":
 		log.Fatalf("MongoDB not currently supported")
 	case "postgres", "postgresql":
 		log.Printf("Starting Postgres data services")
+		userService, projectService, authService, meetingService, tagService, err = initializeSqlServices()
+		if err != nil {
+			log.Fatalf("Unable to initialize postgres services: %+v", err)
+		}
 	default:
 		log.Fatalf("Unknown datasource type: %+s", datasourceType)
 	}
@@ -106,9 +117,23 @@ func main() {
 - - - - - - - - - - - - - - - - - */
 
 func initializeSqlServices() (services.UserService, services.ProjectService, services.AuthService, services.MeetingService, services.TagService, error) {
-	db, err := sql.Open("postgres", "user=pqgotest dbname=pqgotest sslmode=verify-full")
+	// dbHost := os.Getenv("QAPLA_POSTGRES_DB_HOST")
+	dbPort := os.Getenv("QAPLA_POSTGRES_DB_PORT")
+	dbUser := os.Getenv("QAPLA_POSTGRES_DB_USER")
+	dbName := os.Getenv("QAPLA_POSTGRES_DB_NAME")
+	dbPassword := os.Getenv("QAPLA_POSTGRES_DB_PASSWORD")
+	sslMode := os.Getenv("QAPLA_POSTGRES_DB_SSLMODE")
+
+	dataSourceName := fmt.Sprintf("port=%s host=db user=%s dbname=%s password=%s sslmode=%s", dbPort, dbUser, dbName, dbPassword, sslMode)
+	log.Printf("dataSourceName: %s", dataSourceName)
+	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		db.Close()
+		log.Fatalf("Error with ping: %+v", err)
 	}
 
 	queries := seequell.New(db)
@@ -126,157 +151,145 @@ func initializeSqlServices() (services.UserService, services.ProjectService, ser
 							In-memory
 - - - - - - - - - - - - - - - - - */
 
-func initializeInmemServices() (services.UserService, services.ProjectService, services.AuthService, services.MeetingService, services.TagService, error) {
-	usersMap := initializeUsers()
-	projectMap := initializeProjects()
-	projectUserMap := make(map[string][]string)
-	projectUser := make([]string, 1)
-	projectUser[0] = "1"
-	projectUserMap["1"] = projectUser
-	meetingMap := initializeMeetings()
-	meetingUserMap := make(map[string][]string)
-	meetingProjectMap := make(map[string][]string)
-	tagMap := initializeTags()
-	meetingItemMap := make(map[string]*model.MeetingItem)
-	meetingNoteMap := make(map[string]*model.MeetingNote)
+// func initializeInmemServices() (services.UserService, services.ProjectService, services.AuthService, services.MeetingService, services.TagService, error) {
+// 	usersMap := initializeUsers()
+// 	projectMap := initializeProjects()
+// 	projectUserMap := make(map[string][]string)
+// 	projectUser := make([]string, 1)
+// 	projectUser[0] = "1"
+// 	projectUserMap["1"] = projectUser
+// 	meetingMap := initializeMeetings()
+// 	meetingUserMap := make(map[string][]string)
+// 	meetingProjectMap := make(map[string][]string)
+// 	tagMap := initializeTags()
+// 	meetingItemMap := make(map[string]*model.MeetingItem)
+// 	meetingNoteMap := make(map[string]*model.MeetingNote)
 
-	userServiceInmem := inmem.NewUserServiceInmem(
-		usersMap,
-		projectMap,
-		projectUserMap,
-	)
+// 	userServiceInmem := inmem.NewUserServiceInmem(
+// 		usersMap,
+// 		projectMap,
+// 		projectUserMap,
+// 	)
 
-	projectServiceInmem := inmem.NewProjectServiceInmem(
-		usersMap,
-		projectMap,
-		projectUserMap,
-	)
+// 	projectServiceInmem := inmem.NewProjectServiceInmem(
+// 		usersMap,
+// 		projectMap,
+// 		projectUserMap,
+// 	)
 
-	authServiceInmem := &inmem.AuthServiceInmem{
-		UserSevice: userServiceInmem,
-	}
+// 	authServiceInmem := &inmem.AuthServiceInmem{
+// 		UserSevice: userServiceInmem,
+// 	}
 
-	meetingServiceInmem := inmem.NewMeetingServiceInmem(
-		meetingMap,
-		usersMap,
-		projectMap,
-		projectUserMap,
-		meetingUserMap,
-		meetingProjectMap,
-		tagMap,
-		meetingItemMap,
-		meetingNoteMap,
-	)
+// 	meetingServiceInmem := inmem.NewMeetingServiceInmem(
+// 		meetingMap,
+// 		usersMap,
+// 		projectMap,
+// 		projectUserMap,
+// 		meetingUserMap,
+// 		meetingProjectMap,
+// 		tagMap,
+// 		meetingItemMap,
+// 		meetingNoteMap,
+// 	)
 
-	tagServiceInmem := inmem.NewTagServiceInmem(tagMap)
+// 	tagServiceInmem := inmem.NewTagServiceInmem(tagMap)
 
-	return userServiceInmem, projectServiceInmem, authServiceInmem, meetingServiceInmem, tagServiceInmem, nil
-}
+// 	return userServiceInmem, projectServiceInmem, authServiceInmem, meetingServiceInmem, tagServiceInmem, nil
+// }
 
-func initializeUsers() map[string]*model.User {
-	usersMap := make(map[string]*model.User)
-	usersMap["1"] = &model.User{
-		ID:         "1",
-		FirstName:  "Dale",
-		LastName:   "Chang",
-		GoesBy:     "Dale",
-		MiddleName: "",
-		Email:      "dale@eloquia.io",
-		Password:   "notagoodpassword",
-		Ethnicity:  "East Asian",
-		Position:   "Software Engineer",
+func initializeUsers() map[string]*model.UserDetails {
+	usersMap := make(map[string]*model.UserDetails)
+	usersMap["1"] = &model.UserDetails{
+		ID:        1,
+		FirstName: "Dale",
+		LastName:  "Chang",
+		Email:     "dale@eloquia.io",
 	}
 
 	return usersMap
 }
 
-func initializeProjects() map[string]*model.Project {
-	projectMap := make(map[string]*model.Project)
-	projectMap["1"] = &model.Project{
-		ID:          "1",
-		Name:        "Test Project",
-		Description: "Test project for testing purposes",
-		Slug:        "test-project",
-	}
+// func initializeProjects() map[string]*model.Project {
+// 	projectMap := make(map[string]*model.Project)
+// 	projectMap["1"] = &model.Project{
+// 		ID:          1,
+// 		Name:        "Test Project",
+// 		Description: "Test project for testing purposes",
+// 		Slug:        "test-project",
+// 	}
 
-	return projectMap
-}
+// 	return projectMap
+// }
 
-func initializeMeetings() map[string]*model.MeetingDetails {
-	meetingMap := make(map[string]*model.MeetingDetails)
+// func initializeMeetings() map[string]*model.MeetingDetails {
+// 	meetingMap := make(map[string]*model.MeetingDetails)
 
-	var users []*model.User
-	dale := &model.User{
-		ID:          "1",
-		FirstName:   "Dale",
-		LastName:    "Chang",
-		GoesBy:      "Dale",
-		MiddleName:  "",
-		Email:       "dale@eloquia.io",
-		Gender:      "M",
-		Ethnicity:   "East Asian",
-		Position:    "Software Engineer",
-		Institution: "Cigna",
-	}
-	users = append(users, dale)
+// 	var users []*model.User
+// 	dale := &model.User{
+// 		ID:        "1",
+// 		FirstName: "Dale",
+// 		LastName:  "Chang",
+// 	}
+// 	users = append(users, dale)
 
-	var tags []*model.MeetingNoteTag
-	tag := &model.MeetingNoteTag{
-		ID:   "1",
-		Text: "Good",
-	}
-	tags = append(tags, tag)
-	var notes []*model.MeetingNote
-	note := &model.MeetingNote{
-		ID:     "1",
-		About:  dale,
-		Author: dale,
-		Text:   "Test status",
-		Tags:   tags,
-	}
-	notes = append(notes, note)
-	var meetingItems []*model.MeetingItem
-	attendanceReason := ""
-	meetingItem := &model.MeetingItem{
-		ID:                      "1",
-		Personnel:               dale,
-		PlannedAttendanceStatus: "Attending",
-		ActualAttendanceStatus:  "Attending",
-		AttendanceReason:        &attendanceReason,
-		Notes:                   notes,
-	}
-	meetingItems = append(meetingItems, meetingItem)
+// 	var tags []*model.MeetingNoteTag
+// 	tag := &model.MeetingNoteTag{
+// 		ID:   "1",
+// 		Text: "Good",
+// 	}
+// 	tags = append(tags, tag)
+// 	var notes []*model.MeetingNote
+// 	note := &model.MeetingNote{
+// 		ID:     "1",
+// 		About:  dale,
+// 		Author: dale,
+// 		Text:   "Test status",
+// 		Tags:   tags,
+// 	}
+// 	notes = append(notes, note)
+// 	var meetingItems []*model.MeetingItem
+// 	attendanceReason := ""
+// 	meetingItem := &model.MeetingItem{
+// 		ID:                      "1",
+// 		Personnel:               dale,
+// 		PlannedAttendanceStatus: "Attending",
+// 		ActualAttendanceStatus:  "Attending",
+// 		AttendanceReason:        &attendanceReason,
+// 		Notes:                   notes,
+// 	}
+// 	meetingItems = append(meetingItems, meetingItem)
 
-	meetingMap["1"] = &model.MeetingDetails{
-		ID:              "1",
-		Name:            "Test Meeting",
-		StartTime:       time.Now(),
-		DurationMinutes: 30,
-		People:          users,
-		MeetingItems:    meetingItems,
-	}
+// 	meetingMap["1"] = &model.MeetingDetails{
+// 		ID:              "1",
+// 		Name:            "Test Meeting",
+// 		StartTime:       time.Now(),
+// 		DurationMinutes: 30,
+// 		People:          users,
+// 		MeetingItems:    meetingItems,
+// 	}
 
-	return meetingMap
-}
+// 	return meetingMap
+// }
 
-func initializeTags() map[string]*model.MeetingNoteTag {
-	tagMap := make(map[string]*model.MeetingNoteTag)
-	tagMap["1"] = &model.MeetingNoteTag{
-		ID:   "1",
-		Text: "Good",
-	}
-	tagMap["2"] = &model.MeetingNoteTag{
-		ID:   "2",
-		Text: "Bad",
-	}
-	tagMap["3"] = &model.MeetingNoteTag{
-		ID:   "3",
-		Text: "Breakthrough",
-	}
-	tagMap["4"] = &model.MeetingNoteTag{
-		ID:   "4",
-		Text: "Status",
-	}
+// func initializeTags() map[string]*model.MeetingNoteTag {
+// 	tagMap := make(map[string]*model.MeetingNoteTag)
+// 	tagMap["1"] = &model.MeetingNoteTag{
+// 		ID:   "1",
+// 		Text: "Good",
+// 	}
+// 	tagMap["2"] = &model.MeetingNoteTag{
+// 		ID:   "2",
+// 		Text: "Bad",
+// 	}
+// 	tagMap["3"] = &model.MeetingNoteTag{
+// 		ID:   "3",
+// 		Text: "Breakthrough",
+// 	}
+// 	tagMap["4"] = &model.MeetingNoteTag{
+// 		ID:   "4",
+// 		Text: "Status",
+// 	}
 
-	return tagMap
-}
+// 	return tagMap
+// }

@@ -1,19 +1,29 @@
 # GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
+#
+# Data shapes requested by the front-end
 
 # # # # # # # # # # # # # # # # #
 #               User
 # # # # # # # # # # # # # # # # #
 
 type User {
-  id: ID!
+  id: Int!
   firstName: String!
   lastName: String!
 }
 
+type UserDetailsShort {
+  id: Int!
+  firstName: String!
+  lastName: String!
+  email: String!
+  assignedProjects: [Project]
+}
+
 type UserDetails {
-  id: ID!
+  id: Int!
   firstName: String!
   lastName: String!
   email: String!
@@ -21,12 +31,18 @@ type UserDetails {
 }
 
 input NewUser {
+  firstName: String!
+  lastName: String!
+  email: String!
+}
+
+input NewUserAuth {
   email: String!
   password: String!
 }
 
 input UpdateUser {
-  id: String!
+  id: Int!
   firstName: String!
   lastName: String!
   goesBy: String!
@@ -56,16 +72,17 @@ input NewPersonnel {
 # # # # # # # # # # # # # # # # #
 
 type Project {
-  id: String!
+  id: Int!
   name: String!
   description: String
   personnel: [User!]!
+  slug: String!
   createdAt: Time
   updatedAt: Time
 }
 
 type ProjectDetails {
-  id: String!
+  id: Int!
   name: String!
   description: String!
   personnel: [User]
@@ -73,7 +90,7 @@ type ProjectDetails {
 }
 
 type ProjectListItem {
-  id: String!
+  id: Int!
   name: String!
   slug: String!
   personnel: [User]
@@ -85,7 +102,7 @@ input NewProject {
 }
 
 input UpdateProject {
-  id: String!
+  id: Int!
   name: String!
   description: String
 }
@@ -95,7 +112,7 @@ input UpdateProject {
 # # # # # # # # # # # # # # # # #
 
 type Meeting {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   projects: [Project]
@@ -104,37 +121,37 @@ type Meeting {
 }
 
 type MeetingListItem {
-  id: String!
+  id: Int!
   name: String!
   startTime: Time!
 }
 
 input NewUserMeeting {
   name: String!
-  peopleIDs: [String]
+  peopleIDs: [Int]
   startTime: Time!
   durationMinutes: Int!
 }
 
 input NewProjectMeeting {
   name: String!
-  projectIDs: [String]
+  projectIDs: [Int]
   startTime: Time!
   durationMinutes: Int!
 }
 
 input MeetingNoteTagInput {
-  id: String!
+  id: Int!
   text: String!
 }
 
 type MeetingNoteTag {
-  id: String!
+  id: Int!
   text: String!
 }
 
 input MeetingNoteInput {
-  id: String
+  id: Int
   about: String!
   author: String!
   text: String!
@@ -142,9 +159,9 @@ input MeetingNoteInput {
 }
 
 type MeetingNote {
-  id: String!
-  about: User!
-  author: User!
+  id: Int!
+  aboutId: Int!
+  authorId: Int!
   text: String!
   tags: [MeetingNoteTag]
   createdAt: Time!
@@ -152,7 +169,7 @@ type MeetingNote {
 }
 
 input MeetingItemInput {
-  id: String!
+  id: Int!
   personnel: String!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
@@ -161,9 +178,9 @@ input MeetingItemInput {
 }
 
 type MeetingItem {
-  id: String!
-  meetingID: String!
-  personnel: User!
+  id: Int!
+  meetingID: Int!
+  personnelID: Int!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
   attendanceReason: String
@@ -171,7 +188,7 @@ type MeetingItem {
 }
 
 type MeetingDetails {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   projects: [Project]
@@ -181,16 +198,16 @@ type MeetingDetails {
 }
 
 input UpdatedPeopleMeetingDetails {
-  id: String!
+  id: Int!
   name: String!
-  people: [String]
+  people: [Int]
   meetingItems: [MeetingItemInput!]!
   startTime: Time!
   durationMinutes: Int!
 }
 
 type PeopleMeetingDetails {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   meetingItems: [MeetingItem]
@@ -199,8 +216,8 @@ type PeopleMeetingDetails {
 }
 
 input UpdateMeetingItemRequest {
-  id: String!
-  personnelID: String!
+  id: Int!
+  personnelID: Int!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
   attendanceReason: String!
@@ -215,7 +232,8 @@ type Mutation {
   # # #
   # # # User
   # # #
-  createUser(email: String!, password: String!): User!
+  createUser(input: NewUser!): UserDetails!
+  createAuth(input: NewUserAuth!): UserDetails!
   createPersonnel(input: NewPersonnel!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
@@ -224,7 +242,7 @@ type Mutation {
   # # #
   createProject(input: NewProject!): Project!
   updateProject(input: UpdateProject!): Project!
-  assignUserToProject(userId: String!, projectId: String!): User!
+  assignUserToProject(userId: Int!, projectId: Int!): User!
 
   # # #
   # # # Authentication
@@ -244,22 +262,22 @@ type Query {
   # # #
   # # # User
   # # #
-  users: [User]!
-  userDetails: [UserDetails]
-  getUserById(id: String!): User!
+  users: [UserDetails]!
+  userDetails: [UserDetailsShort]!
+  getUserById(id: Int!): UserDetails!
 
   # # #
   # # # Project
   # # #
   projectListItems: [ProjectListItem]!
-  getProjectById(id: String!): Project!
+  getProjectById(id: Int!): Project!
   projectDetails(slug: String!): ProjectDetails!
   projectDetailsList: [ProjectDetails]!
 
   # # #
   # # # Meeting
   # # #
-  meetingById(id: String!): MeetingDetails!
+  meetingById(id: Int!): MeetingDetails!
   meetingsByDate(date: Time!): [MeetingDetails]!
 
   # # #

@@ -7,7 +7,7 @@ import (
 )
 
 type Meeting struct {
-	ID              string     `json:"id"`
+	ID              int        `json:"id"`
 	Name            string     `json:"name"`
 	People          []*User    `json:"people"`
 	Projects        []*Project `json:"projects"`
@@ -16,7 +16,7 @@ type Meeting struct {
 }
 
 type MeetingDetails struct {
-	ID              string         `json:"id"`
+	ID              int            `json:"id"`
 	Name            string         `json:"name"`
 	People          []*User        `json:"people"`
 	Projects        []*Project     `json:"projects"`
@@ -26,9 +26,9 @@ type MeetingDetails struct {
 }
 
 type MeetingItem struct {
-	ID                      string         `json:"id"`
-	MeetingID               string         `json:"meetingID"`
-	Personnel               *User          `json:"personnel"`
+	ID                      int            `json:"id"`
+	MeetingID               int            `json:"meetingID"`
+	PersonnelID             int            `json:"personnelID"`
 	PlannedAttendanceStatus string         `json:"plannedAttendanceStatus"`
 	ActualAttendanceStatus  string         `json:"actualAttendanceStatus"`
 	AttendanceReason        *string        `json:"attendanceReason"`
@@ -36,7 +36,7 @@ type MeetingItem struct {
 }
 
 type MeetingItemInput struct {
-	ID                      string              `json:"id"`
+	ID                      int                 `json:"id"`
 	Personnel               string              `json:"personnel"`
 	PlannedAttendanceStatus string              `json:"plannedAttendanceStatus"`
 	ActualAttendanceStatus  string              `json:"actualAttendanceStatus"`
@@ -45,15 +45,15 @@ type MeetingItemInput struct {
 }
 
 type MeetingListItem struct {
-	ID        string    `json:"id"`
+	ID        int       `json:"id"`
 	Name      string    `json:"name"`
 	StartTime time.Time `json:"startTime"`
 }
 
 type MeetingNote struct {
-	ID        string            `json:"id"`
-	About     *User             `json:"about"`
-	Author    *User             `json:"author"`
+	ID        int               `json:"id"`
+	AboutID   int               `json:"aboutId"`
+	AuthorID  int               `json:"authorId"`
 	Text      string            `json:"text"`
 	Tags      []*MeetingNoteTag `json:"tags"`
 	CreatedAt time.Time         `json:"createdAt"`
@@ -61,7 +61,7 @@ type MeetingNote struct {
 }
 
 type MeetingNoteInput struct {
-	ID     *string                `json:"id"`
+	ID     *int                   `json:"id"`
 	About  string                 `json:"about"`
 	Author string                 `json:"author"`
 	Text   string                 `json:"text"`
@@ -69,12 +69,12 @@ type MeetingNoteInput struct {
 }
 
 type MeetingNoteTag struct {
-	ID   string `json:"id"`
+	ID   int    `json:"id"`
 	Text string `json:"text"`
 }
 
 type MeetingNoteTagInput struct {
-	ID   string `json:"id"`
+	ID   int    `json:"id"`
 	Text string `json:"text"`
 }
 
@@ -90,22 +90,38 @@ type NewPersonnel struct {
 	Institution *string `json:"institution"`
 }
 
+type NewProject struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+}
+
 type NewProjectMeeting struct {
 	Name            string    `json:"name"`
-	ProjectIDs      []*string `json:"projectIDs"`
+	ProjectIDs      []*int    `json:"projectIDs"`
 	StartTime       time.Time `json:"startTime"`
 	DurationMinutes int       `json:"durationMinutes"`
 }
 
+type NewUser struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+}
+
+type NewUserAuth struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type NewUserMeeting struct {
 	Name            string    `json:"name"`
-	PeopleIDs       []*string `json:"peopleIDs"`
+	PeopleIDs       []*int    `json:"peopleIDs"`
 	StartTime       time.Time `json:"startTime"`
 	DurationMinutes int       `json:"durationMinutes"`
 }
 
 type PeopleMeetingDetails struct {
-	ID              string         `json:"id"`
+	ID              int            `json:"id"`
 	Name            string         `json:"name"`
 	People          []*User        `json:"people"`
 	MeetingItems    []*MeetingItem `json:"meetingItems"`
@@ -113,27 +129,87 @@ type PeopleMeetingDetails struct {
 	DurationMinutes int            `json:"durationMinutes"`
 }
 
+type Project struct {
+	ID          int        `json:"id"`
+	Name        string     `json:"name"`
+	Description *string    `json:"description"`
+	Personnel   []*User    `json:"personnel"`
+	Slug        string     `json:"slug"`
+	CreatedAt   *time.Time `json:"createdAt"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
+}
+
+type ProjectDetails struct {
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Personnel   []*User `json:"personnel"`
+	Slug        string  `json:"slug"`
+}
+
 type ProjectListItem struct {
-	ID        string  `json:"id"`
+	ID        int     `json:"id"`
 	Name      string  `json:"name"`
 	Slug      string  `json:"slug"`
 	Personnel []*User `json:"personnel"`
 }
 
 type UpdateMeetingItemRequest struct {
-	ID                      string              `json:"id"`
-	PersonnelID             string              `json:"personnelID"`
+	ID                      int                 `json:"id"`
+	PersonnelID             int                 `json:"personnelID"`
 	PlannedAttendanceStatus string              `json:"plannedAttendanceStatus"`
 	ActualAttendanceStatus  string              `json:"actualAttendanceStatus"`
 	AttendanceReason        string              `json:"attendanceReason"`
 	Notes                   []*MeetingNoteInput `json:"notes"`
 }
 
+type UpdateProject struct {
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+}
+
+type UpdateUser struct {
+	ID          int    `json:"id"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	GoesBy      string `json:"goesBy"`
+	MiddleName  string `json:"middleName"`
+	Email       string `json:"email"`
+	Gender      string `json:"gender"`
+	Ethnicity   string `json:"ethnicity"`
+	Position    string `json:"position"`
+	Institution string `json:"institution"`
+	IsActive    bool   `json:"isActive"`
+}
+
 type UpdatedPeopleMeetingDetails struct {
-	ID              string              `json:"id"`
+	ID              int                 `json:"id"`
 	Name            string              `json:"name"`
-	People          []*string           `json:"people"`
+	People          []*int              `json:"people"`
 	MeetingItems    []*MeetingItemInput `json:"meetingItems"`
 	StartTime       time.Time           `json:"startTime"`
 	DurationMinutes int                 `json:"durationMinutes"`
+}
+
+type User struct {
+	ID        int    `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+type UserDetails struct {
+	ID               int        `json:"id"`
+	FirstName        string     `json:"firstName"`
+	LastName         string     `json:"lastName"`
+	Email            string     `json:"email"`
+	AssignedProjects []*Project `json:"assignedProjects"`
+}
+
+type UserDetailsShort struct {
+	ID               int        `json:"id"`
+	FirstName        string     `json:"firstName"`
+	LastName         string     `json:"lastName"`
+	Email            string     `json:"email"`
+	AssignedProjects []*Project `json:"assignedProjects"`
 }

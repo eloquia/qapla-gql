@@ -27,7 +27,7 @@ func (me *MeetingServiceSql) CreateProjectMeeting(ctx context.Context, input mod
 	panic("Not yet implemented")
 }
 
-func (me *MeetingServiceSql) GetById(ctx context.Context, meetingID string) (*model.MeetingDetails, error) {
+func (me *MeetingServiceSql) GetById(ctx context.Context, meetingID int) (*model.MeetingDetails, error) {
 	panic("Not yet implemented")
 }
 

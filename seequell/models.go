@@ -7,31 +7,50 @@ import (
 	"time"
 )
 
-type Project struct {
-	ID          int64          `json:"id"`
+type CoreQaplaMeeting struct {
+	MeetingID   int64        `json:"meeting_id"`
+	MeetingName string       `json:"meeting_name"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+}
+
+type CoreQaplaProject struct {
+	ProjectID   int64          `json:"project_id"`
 	ProjectName string         `json:"project_name"`
 	ProjectDesc sql.NullString `json:"project_desc"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
 
-type ProjectUser struct {
+type CoreQaplaProjectUser struct {
 	UserID    int64 `json:"user_id"`
 	ProjectID int64 `json:"project_id"`
 }
 
-type User struct {
-	ID          int64          `json:"id"`
-	FirstName   string         `json:"first_name"`
-	LastName    string         `json:"last_name"`
-	MiddleName  sql.NullString `json:"middle_name"`
-	GoesBy      sql.NullString `json:"goes_by"`
-	Email       string         `json:"email"`
-	Pw          string         `json:"pw"`
-	Gender      sql.NullString `json:"gender"`
-	Ethnicity   sql.NullString `json:"ethnicity"`
-	Position    sql.NullString `json:"position"`
-	Institution sql.NullString `json:"institution"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   sql.NullTime   `json:"updated_at"`
+type CoreQaplaUser struct {
+	UserID    int64        `json:"user_id"`
+	FirstName string       `json:"first_name"`
+	LastName  string       `json:"last_name"`
+	Email     string       `json:"email"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
+type CoreQaplaUserAuth struct {
+	UserAuthID       int64        `json:"user_auth_id"`
+	UserID           int64        `json:"user_id"`
+	UserAuthPassword string       `json:"user_auth_password"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        sql.NullTime `json:"updated_at"`
+}
+
+type CoreQaplaUserDetail struct {
+	UserDetailID int64          `json:"user_detail_id"`
+	UserID       int64          `json:"user_id"`
+	MiddleName   sql.NullString `json:"middle_name"`
+	GoesBy       sql.NullString `json:"goes_by"`
+	Gender       sql.NullString `json:"gender"`
+	Ethnicity    sql.NullString `json:"ethnicity"`
+	Position     sql.NullString `json:"position"`
+	Institution  sql.NullString `json:"institution"`
 }

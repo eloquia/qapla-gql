@@ -26,7 +26,7 @@ func (ps *ProjectServiceSql) GetAll(ctx context.Context) ([]*model.ProjectDetail
 	panic("Not yet implemented")
 }
 
-func (ps *ProjectServiceSql) GetById(ctx context.Context, id string) (*model.Project, error) {
+func (ps *ProjectServiceSql) GetById(ctx context.Context, id int) (*model.Project, error) {
 	panic("Not yet implemented")
 }
 
@@ -34,15 +34,15 @@ func (ps *ProjectServiceSql) GetProjectDetails(ctx context.Context, slug string)
 	panic("Not yet implemented")
 }
 
-func (ps *ProjectServiceSql) AddUserToProject(ctx context.Context, userId string, projectId string) (*model.User, error) {
+func (ps *ProjectServiceSql) AddUserToProject(ctx context.Context, userId int, projectId int) (*model.User, error) {
 	panic("Not yet implemented")
 }
 
-func (ps *ProjectServiceSql) GetProjectPersonnel(ctx context.Context, projectID string) ([]*model.User, error) {
+func (ps *ProjectServiceSql) GetProjectPersonnel(ctx context.Context, projectID int) ([]*model.User, error) {
 	panic("Not yet implemented")
 }
 
-func (ps *ProjectServiceSql) GetAssignedProjects(ctx context.Context, userID string) ([]*model.Project, error) {
+func (ps *ProjectServiceSql) GetAssignedProjects(ctx context.Context, userID int) ([]*model.Project, error) {
 	panic("Not yet implemented")
 }
 
@@ -51,5 +51,9 @@ func (ps *ProjectServiceSql) GetProjectListItems(ctx context.Context) ([]*model.
 }
 
 func (ps *ProjectServiceSql) GetAllProjectDetails(ctx context.Context) ([]*model.ProjectDetails, error) {
+	panic("Not yet implemented")
+}
+
+func (ps *ProjectServiceSql) UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error) {
 	panic("Not yet implemented")
 }

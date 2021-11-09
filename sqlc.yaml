@@ -2,8 +2,8 @@ version: 1
 packages:
   - name: "seequell"
     path: "seequell"
-    schema: "./seequell/schema.sql"
-    queries: "./seequell/query.sql"
+    schema: "./seequell/schema/"
+    queries: "./seequell/query/"
     engine: "postgresql"
     emit_prepared_queries: true
     emit_interface: false

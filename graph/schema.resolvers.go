@@ -5,18 +5,18 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"qaplagql/graph/generated"
 	"qaplagql/graph/model"
 	"time"
 )
 
-func (r *mutationResolver) CreateUser(ctx context.Context, email string, password string) (*model.User, error) {
-	return r.UserService.CreateUser(ctx, &model.NewUser{
-		Email:    email,
-		Password: password,
-	})
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error) {
+	return r.UserService.CreateUser(ctx, input)
+}
+
+func (r *mutationResolver) CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetails, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error) {
@@ -32,24 +32,10 @@ func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewPro
 }
 
 func (r *mutationResolver) UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error) {
-	// check to see if project with ID exists
-	existingProject := r.projects[input.ID]
-
-	if existingProject == nil {
-		return nil, errors.New("Project not found")
-	}
-
-	project := &model.Project{
-		ID:          input.ID,
-		Name:        input.Name,
-		Description: input.Description,
-	}
-	r.projects[input.ID] = project
-
-	return project, nil
+	return r.ProjectService.UpdateProject(ctx, input)
 }
 
-func (r *mutationResolver) AssignUserToProject(ctx context.Context, userID string, projectID string) (*model.User, error) {
+func (r *mutationResolver) AssignUserToProject(ctx context.Context, userID int, projectID int) (*model.User, error) {
 	return r.ProjectService.AddUserToProject(ctx, userID, projectID)
 }
 
@@ -73,27 +59,23 @@ func (r *mutationResolver) UpdateMeetingItem(ctx context.Context, input model.Up
 	return r.MeetingService.UpdateMeetingItem(ctx, input)
 }
 
-func (r *projectResolver) Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error) {
-	return r.ProjectService.GetProjectPersonnel(ctx, obj.ID)
+func (r *queryResolver) Users(ctx context.Context) ([]*model.UserDetails, error) {
+	return r.UserService.GetAll(ctx)
 }
 
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	return r.UserService.GetAll()
+func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error) {
+	return r.UserService.GetAllShortUserDetails(ctx)
 }
 
-func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetails, error) {
-	return r.UserService.GetAllUserDetails(ctx)
-}
-
-func (r *queryResolver) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	return r.UserService.GetById(id)
+func (r *queryResolver) GetUserByID(ctx context.Context, id int) (*model.UserDetails, error) {
+	return r.UserService.GetById(ctx, id)
 }
 
 func (r *queryResolver) ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error) {
 	return r.ProjectService.GetProjectListItems(ctx)
 }
 
-func (r *queryResolver) GetProjectByID(ctx context.Context, id string) (*model.Project, error) {
+func (r *queryResolver) GetProjectByID(ctx context.Context, id int) (*model.Project, error) {
 	return r.ProjectService.GetById(ctx, id)
 }
 
@@ -105,7 +87,7 @@ func (r *queryResolver) ProjectDetailsList(ctx context.Context) ([]*model.Projec
 	return r.ProjectService.GetAllProjectDetails(ctx)
 }
 
-func (r *queryResolver) MeetingByID(ctx context.Context, id string) (*model.MeetingDetails, error) {
+func (r *queryResolver) MeetingByID(ctx context.Context, id int) (*model.MeetingDetails, error) {
 	return r.MeetingService.GetById(ctx, id)
 }
 
@@ -120,12 +102,8 @@ func (r *queryResolver) Tags(ctx context.Context) ([]*model.MeetingNoteTag, erro
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
-// Project returns generated.ProjectResolver implementation.
-func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
-
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
-type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

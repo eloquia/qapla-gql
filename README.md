@@ -23,6 +23,14 @@ Moving from a conventional REST API will reduce the number of data shapes that t
 
 ---
 
+## Key Dependencies
+
+* [gqlgen](https://gqlgen.com/) for automatically generating GraphQL endpoints
+* [sqlc](https://docs.sqlc.dev/en/latest/index.html) for automatically generating Golang service code from SQL queries
+* [golang-migrate (postgres)](https://github.com/golang-migrate/migrate/tree/master/database/postgres) for DDL & DML changes
+
+---
+
 ## Contributing
 
 To add code

@@ -37,7 +37,6 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
-	Project() ProjectResolver
 	Query() QueryResolver
 }
 
@@ -70,7 +69,7 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		MeetingID               func(childComplexity int) int
 		Notes                   func(childComplexity int) int
-		Personnel               func(childComplexity int) int
+		PersonnelID             func(childComplexity int) int
 		PlannedAttendanceStatus func(childComplexity int) int
 	}
 
@@ -81,8 +80,8 @@ type ComplexityRoot struct {
 	}
 
 	MeetingNote struct {
-		About     func(childComplexity int) int
-		Author    func(childComplexity int) int
+		AboutID   func(childComplexity int) int
+		AuthorID  func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Tags      func(childComplexity int) int
@@ -96,11 +95,12 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AssignUserToProject  func(childComplexity int, userID string, projectID string) int
+		AssignUserToProject  func(childComplexity int, userID int, projectID int) int
+		CreateAuth           func(childComplexity int, input model.NewUserAuth) int
 		CreatePersonnel      func(childComplexity int, input model.NewPersonnel) int
 		CreateProject        func(childComplexity int, input model.NewProject) int
 		CreateProjectMeeting func(childComplexity int, input model.NewProjectMeeting) int
-		CreateUser           func(childComplexity int, email string, password string) int
+		CreateUser           func(childComplexity int, input model.NewUser) int
 		CreateUserMeeting    func(childComplexity int, input model.NewUserMeeting) int
 		SignIn               func(childComplexity int, email string, password string) int
 		UpdateMeetingItem    func(childComplexity int, input model.UpdateMeetingItemRequest) int
@@ -124,6 +124,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Personnel   func(childComplexity int) int
+		Slug        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
 
@@ -143,9 +144,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetProjectByID     func(childComplexity int, id string) int
-		GetUserByID        func(childComplexity int, id string) int
-		MeetingByID        func(childComplexity int, id string) int
+		GetProjectByID     func(childComplexity int, id int) int
+		GetUserByID        func(childComplexity int, id int) int
+		MeetingByID        func(childComplexity int, id int) int
 		MeetingsByDate     func(childComplexity int, date time.Time) int
 		ProjectDetails     func(childComplexity int, slug string) int
 		ProjectDetailsList func(childComplexity int) int
@@ -168,33 +169,39 @@ type ComplexityRoot struct {
 		ID               func(childComplexity int) int
 		LastName         func(childComplexity int) int
 	}
+
+	UserDetailsShort struct {
+		AssignedProjects func(childComplexity int) int
+		Email            func(childComplexity int) int
+		FirstName        func(childComplexity int) int
+		ID               func(childComplexity int) int
+		LastName         func(childComplexity int) int
+	}
 }
 
 type MutationResolver interface {
-	CreateUser(ctx context.Context, email string, password string) (*model.User, error)
+	CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error)
+	CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetails, error)
 	CreatePersonnel(ctx context.Context, input model.NewPersonnel) (*model.UserDetails, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
 	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
 	UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error)
-	AssignUserToProject(ctx context.Context, userID string, projectID string) (*model.User, error)
+	AssignUserToProject(ctx context.Context, userID int, projectID int) (*model.User, error)
 	SignIn(ctx context.Context, email string, password string) (*model.User, error)
 	CreateUserMeeting(ctx context.Context, input model.NewUserMeeting) (*model.MeetingDetails, error)
 	CreateProjectMeeting(ctx context.Context, input model.NewProjectMeeting) (*model.MeetingDetails, error)
 	UpdateUserMeeting(ctx context.Context, input model.UpdatedPeopleMeetingDetails) (*model.PeopleMeetingDetails, error)
 	UpdateMeetingItem(ctx context.Context, input model.UpdateMeetingItemRequest) (*model.MeetingItem, error)
 }
-type ProjectResolver interface {
-	Personnel(ctx context.Context, obj *model.Project) ([]*model.User, error)
-}
 type QueryResolver interface {
-	Users(ctx context.Context) ([]*model.User, error)
-	UserDetails(ctx context.Context) ([]*model.UserDetails, error)
-	GetUserByID(ctx context.Context, id string) (*model.User, error)
+	Users(ctx context.Context) ([]*model.UserDetails, error)
+	UserDetails(ctx context.Context) ([]*model.UserDetailsShort, error)
+	GetUserByID(ctx context.Context, id int) (*model.UserDetails, error)
 	ProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error)
-	GetProjectByID(ctx context.Context, id string) (*model.Project, error)
+	GetProjectByID(ctx context.Context, id int) (*model.Project, error)
 	ProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error)
 	ProjectDetailsList(ctx context.Context) ([]*model.ProjectDetails, error)
-	MeetingByID(ctx context.Context, id string) (*model.MeetingDetails, error)
+	MeetingByID(ctx context.Context, id int) (*model.MeetingDetails, error)
 	MeetingsByDate(ctx context.Context, date time.Time) ([]*model.MeetingDetails, error)
 	Tags(ctx context.Context) ([]*model.MeetingNoteTag, error)
 }
@@ -340,12 +347,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MeetingItem.Notes(childComplexity), true
 
-	case "MeetingItem.personnel":
-		if e.complexity.MeetingItem.Personnel == nil {
+	case "MeetingItem.personnelID":
+		if e.complexity.MeetingItem.PersonnelID == nil {
 			break
 		}
 
-		return e.complexity.MeetingItem.Personnel(childComplexity), true
+		return e.complexity.MeetingItem.PersonnelID(childComplexity), true
 
 	case "MeetingItem.plannedAttendanceStatus":
 		if e.complexity.MeetingItem.PlannedAttendanceStatus == nil {
@@ -375,19 +382,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MeetingListItem.StartTime(childComplexity), true
 
-	case "MeetingNote.about":
-		if e.complexity.MeetingNote.About == nil {
+	case "MeetingNote.aboutId":
+		if e.complexity.MeetingNote.AboutID == nil {
 			break
 		}
 
-		return e.complexity.MeetingNote.About(childComplexity), true
+		return e.complexity.MeetingNote.AboutID(childComplexity), true
 
-	case "MeetingNote.author":
-		if e.complexity.MeetingNote.Author == nil {
+	case "MeetingNote.authorId":
+		if e.complexity.MeetingNote.AuthorID == nil {
 			break
 		}
 
-		return e.complexity.MeetingNote.Author(childComplexity), true
+		return e.complexity.MeetingNote.AuthorID(childComplexity), true
 
 	case "MeetingNote.createdAt":
 		if e.complexity.MeetingNote.CreatedAt == nil {
@@ -448,7 +455,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AssignUserToProject(childComplexity, args["userId"].(string), args["projectId"].(string)), true
+		return e.complexity.Mutation.AssignUserToProject(childComplexity, args["userId"].(int), args["projectId"].(int)), true
+
+	case "Mutation.createAuth":
+		if e.complexity.Mutation.CreateAuth == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAuth_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateAuth(childComplexity, args["input"].(model.NewUserAuth)), true
 
 	case "Mutation.createPersonnel":
 		if e.complexity.Mutation.CreatePersonnel == nil {
@@ -496,7 +515,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateUser(childComplexity, args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
 
 	case "Mutation.createUserMeeting":
 		if e.complexity.Mutation.CreateUserMeeting == nil {
@@ -647,6 +666,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Personnel(childComplexity), true
 
+	case "Project.slug":
+		if e.complexity.Project.Slug == nil {
+			break
+		}
+
+		return e.complexity.Project.Slug(childComplexity), true
+
 	case "Project.updatedAt":
 		if e.complexity.Project.UpdatedAt == nil {
 			break
@@ -727,7 +753,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetProjectByID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetProjectByID(childComplexity, args["id"].(int)), true
 
 	case "Query.getUserById":
 		if e.complexity.Query.GetUserByID == nil {
@@ -739,7 +765,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserByID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetUserByID(childComplexity, args["id"].(int)), true
 
 	case "Query.meetingById":
 		if e.complexity.Query.MeetingByID == nil {
@@ -751,7 +777,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.MeetingByID(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.MeetingByID(childComplexity, args["id"].(int)), true
 
 	case "Query.meetingsByDate":
 		if e.complexity.Query.MeetingsByDate == nil {
@@ -868,6 +894,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserDetails.LastName(childComplexity), true
 
+	case "UserDetailsShort.assignedProjects":
+		if e.complexity.UserDetailsShort.AssignedProjects == nil {
+			break
+		}
+
+		return e.complexity.UserDetailsShort.AssignedProjects(childComplexity), true
+
+	case "UserDetailsShort.email":
+		if e.complexity.UserDetailsShort.Email == nil {
+			break
+		}
+
+		return e.complexity.UserDetailsShort.Email(childComplexity), true
+
+	case "UserDetailsShort.firstName":
+		if e.complexity.UserDetailsShort.FirstName == nil {
+			break
+		}
+
+		return e.complexity.UserDetailsShort.FirstName(childComplexity), true
+
+	case "UserDetailsShort.id":
+		if e.complexity.UserDetailsShort.ID == nil {
+			break
+		}
+
+		return e.complexity.UserDetailsShort.ID(childComplexity), true
+
+	case "UserDetailsShort.lastName":
+		if e.complexity.UserDetailsShort.LastName == nil {
+			break
+		}
+
+		return e.complexity.UserDetailsShort.LastName(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -935,19 +996,29 @@ var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
+#
+# Data shapes requested by the front-end
 
 # # # # # # # # # # # # # # # # #
 #               User
 # # # # # # # # # # # # # # # # #
 
 type User {
-  id: ID!
+  id: Int!
   firstName: String!
   lastName: String!
 }
 
+type UserDetailsShort {
+  id: Int!
+  firstName: String!
+  lastName: String!
+  email: String!
+  assignedProjects: [Project]
+}
+
 type UserDetails {
-  id: ID!
+  id: Int!
   firstName: String!
   lastName: String!
   email: String!
@@ -955,12 +1026,18 @@ type UserDetails {
 }
 
 input NewUser {
+  firstName: String!
+  lastName: String!
+  email: String!
+}
+
+input NewUserAuth {
   email: String!
   password: String!
 }
 
 input UpdateUser {
-  id: String!
+  id: Int!
   firstName: String!
   lastName: String!
   goesBy: String!
@@ -990,16 +1067,17 @@ input NewPersonnel {
 # # # # # # # # # # # # # # # # #
 
 type Project {
-  id: String!
+  id: Int!
   name: String!
   description: String
   personnel: [User!]!
+  slug: String!
   createdAt: Time
   updatedAt: Time
 }
 
 type ProjectDetails {
-  id: String!
+  id: Int!
   name: String!
   description: String!
   personnel: [User]
@@ -1007,7 +1085,7 @@ type ProjectDetails {
 }
 
 type ProjectListItem {
-  id: String!
+  id: Int!
   name: String!
   slug: String!
   personnel: [User]
@@ -1019,7 +1097,7 @@ input NewProject {
 }
 
 input UpdateProject {
-  id: String!
+  id: Int!
   name: String!
   description: String
 }
@@ -1029,7 +1107,7 @@ input UpdateProject {
 # # # # # # # # # # # # # # # # #
 
 type Meeting {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   projects: [Project]
@@ -1038,37 +1116,37 @@ type Meeting {
 }
 
 type MeetingListItem {
-  id: String!
+  id: Int!
   name: String!
   startTime: Time!
 }
 
 input NewUserMeeting {
   name: String!
-  peopleIDs: [String]
+  peopleIDs: [Int]
   startTime: Time!
   durationMinutes: Int!
 }
 
 input NewProjectMeeting {
   name: String!
-  projectIDs: [String]
+  projectIDs: [Int]
   startTime: Time!
   durationMinutes: Int!
 }
 
 input MeetingNoteTagInput {
-  id: String!
+  id: Int!
   text: String!
 }
 
 type MeetingNoteTag {
-  id: String!
+  id: Int!
   text: String!
 }
 
 input MeetingNoteInput {
-  id: String
+  id: Int
   about: String!
   author: String!
   text: String!
@@ -1076,9 +1154,9 @@ input MeetingNoteInput {
 }
 
 type MeetingNote {
-  id: String!
-  about: User!
-  author: User!
+  id: Int!
+  aboutId: Int!
+  authorId: Int!
   text: String!
   tags: [MeetingNoteTag]
   createdAt: Time!
@@ -1086,7 +1164,7 @@ type MeetingNote {
 }
 
 input MeetingItemInput {
-  id: String!
+  id: Int!
   personnel: String!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
@@ -1095,9 +1173,9 @@ input MeetingItemInput {
 }
 
 type MeetingItem {
-  id: String!
-  meetingID: String!
-  personnel: User!
+  id: Int!
+  meetingID: Int!
+  personnelID: Int!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
   attendanceReason: String
@@ -1105,7 +1183,7 @@ type MeetingItem {
 }
 
 type MeetingDetails {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   projects: [Project]
@@ -1115,16 +1193,16 @@ type MeetingDetails {
 }
 
 input UpdatedPeopleMeetingDetails {
-  id: String!
+  id: Int!
   name: String!
-  people: [String]
+  people: [Int]
   meetingItems: [MeetingItemInput!]!
   startTime: Time!
   durationMinutes: Int!
 }
 
 type PeopleMeetingDetails {
-  id: String!
+  id: Int!
   name: String!
   people: [User]
   meetingItems: [MeetingItem]
@@ -1133,8 +1211,8 @@ type PeopleMeetingDetails {
 }
 
 input UpdateMeetingItemRequest {
-  id: String!
-  personnelID: String!
+  id: Int!
+  personnelID: Int!
   plannedAttendanceStatus: String!
   actualAttendanceStatus: String!
   attendanceReason: String!
@@ -1149,7 +1227,8 @@ type Mutation {
   # # #
   # # # User
   # # #
-  createUser(email: String!, password: String!): User!
+  createUser(input: NewUser!): UserDetails!
+  createAuth(input: NewUserAuth!): UserDetails!
   createPersonnel(input: NewPersonnel!): UserDetails!
   updateUser(input: UpdateUser!): User!
 
@@ -1158,7 +1237,7 @@ type Mutation {
   # # #
   createProject(input: NewProject!): Project!
   updateProject(input: UpdateProject!): Project!
-  assignUserToProject(userId: String!, projectId: String!): User!
+  assignUserToProject(userId: Int!, projectId: Int!): User!
 
   # # #
   # # # Authentication
@@ -1178,22 +1257,22 @@ type Query {
   # # #
   # # # User
   # # #
-  users: [User]!
-  userDetails: [UserDetails]
-  getUserById(id: String!): User!
+  users: [UserDetails]!
+  userDetails: [UserDetailsShort]!
+  getUserById(id: Int!): UserDetails!
 
   # # #
   # # # Project
   # # #
   projectListItems: [ProjectListItem]!
-  getProjectById(id: String!): Project!
+  getProjectById(id: Int!): Project!
   projectDetails(slug: String!): ProjectDetails!
   projectDetailsList: [ProjectDetails]!
 
   # # #
   # # # Meeting
   # # #
-  meetingById(id: String!): MeetingDetails!
+  meetingById(id: Int!): MeetingDetails!
   meetingsByDate(date: Time!): [MeetingDetails]!
 
   # # #
@@ -1214,24 +1293,39 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_assignUserToProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["userId"] = arg0
-	var arg1 string
+	var arg1 int
 	if tmp, ok := rawArgs["projectId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["projectId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAuth_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewUserAuth
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewUserAuth2qaplagqlᚋgraphᚋmodelᚐNewUserAuth(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1298,24 +1392,15 @@ func (ec *executionContext) field_Mutation_createUserMeeting_args(ctx context.Co
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["email"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 model.NewUser
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewUser2qaplagqlᚋgraphᚋmodelᚐNewUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["email"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["password"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["password"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1421,10 +1506,10 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_getProjectById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1436,10 +1521,10 @@ func (ec *executionContext) field_Query_getProjectById_args(ctx context.Context,
 func (ec *executionContext) field_Query_getUserById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1451,10 +1536,10 @@ func (ec *executionContext) field_Query_getUserById_args(ctx context.Context, ra
 func (ec *executionContext) field_Query_meetingById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 int
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1561,9 +1646,9 @@ func (ec *executionContext) _Meeting_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Meeting_name(ctx context.Context, field graphql.CollectedField, obj *model.Meeting) (ret graphql.Marshaler) {
@@ -1765,9 +1850,9 @@ func (ec *executionContext) _MeetingDetails_id(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingDetails_name(ctx context.Context, field graphql.CollectedField, obj *model.MeetingDetails) (ret graphql.Marshaler) {
@@ -2001,9 +2086,9 @@ func (ec *executionContext) _MeetingItem_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingItem_meetingID(ctx context.Context, field graphql.CollectedField, obj *model.MeetingItem) (ret graphql.Marshaler) {
@@ -2036,12 +2121,12 @@ func (ec *executionContext) _MeetingItem_meetingID(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingItem_personnel(ctx context.Context, field graphql.CollectedField, obj *model.MeetingItem) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingItem_personnelID(ctx context.Context, field graphql.CollectedField, obj *model.MeetingItem) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2059,7 +2144,7 @@ func (ec *executionContext) _MeetingItem_personnel(ctx context.Context, field gr
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Personnel, nil
+		return obj.PersonnelID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2071,9 +2156,9 @@ func (ec *executionContext) _MeetingItem_personnel(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingItem_plannedAttendanceStatus(ctx context.Context, field graphql.CollectedField, obj *model.MeetingItem) (ret graphql.Marshaler) {
@@ -2240,9 +2325,9 @@ func (ec *executionContext) _MeetingListItem_id(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingListItem_name(ctx context.Context, field graphql.CollectedField, obj *model.MeetingListItem) (ret graphql.Marshaler) {
@@ -2345,12 +2430,12 @@ func (ec *executionContext) _MeetingNote_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingNote_about(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNote) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingNote_aboutId(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNote) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2368,7 +2453,7 @@ func (ec *executionContext) _MeetingNote_about(ctx context.Context, field graphq
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.About, nil
+		return obj.AboutID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2380,12 +2465,12 @@ func (ec *executionContext) _MeetingNote_about(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _MeetingNote_author(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNote) (ret graphql.Marshaler) {
+func (ec *executionContext) _MeetingNote_authorId(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNote) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2403,7 +2488,7 @@ func (ec *executionContext) _MeetingNote_author(ctx context.Context, field graph
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Author, nil
+		return obj.AuthorID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2415,9 +2500,9 @@ func (ec *executionContext) _MeetingNote_author(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingNote_text(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNote) (ret graphql.Marshaler) {
@@ -2587,9 +2672,9 @@ func (ec *executionContext) _MeetingNoteTag_id(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _MeetingNoteTag_text(ctx context.Context, field graphql.CollectedField, obj *model.MeetingNoteTag) (ret graphql.Marshaler) {
@@ -2652,7 +2737,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateUser(rctx, args["email"].(string), args["password"].(string))
+		return ec.resolvers.Mutation().CreateUser(rctx, args["input"].(model.NewUser))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2664,9 +2749,51 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.UserDetails)
 	fc.Result = res
-	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createAuth(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createAuth_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateAuth(rctx, args["input"].(model.NewUserAuth))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserDetails)
+	fc.Result = res
+	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createPersonnel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2862,7 +2989,7 @@ func (ec *executionContext) _Mutation_assignUserToProject(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AssignUserToProject(rctx, args["userId"].(string), args["projectId"].(string))
+		return ec.resolvers.Mutation().AssignUserToProject(rctx, args["userId"].(int), args["projectId"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3119,9 +3246,9 @@ func (ec *executionContext) _PeopleMeetingDetails_id(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PeopleMeetingDetails_name(ctx context.Context, field graphql.CollectedField, obj *model.PeopleMeetingDetails) (ret graphql.Marshaler) {
@@ -3323,9 +3450,9 @@ func (ec *executionContext) _Project_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_name(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -3390,9 +3517,9 @@ func (ec *executionContext) _Project_description(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_personnel(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -3406,14 +3533,14 @@ func (ec *executionContext) _Project_personnel(ctx context.Context, field graphq
 		Object:     "Project",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Project().Personnel(rctx, obj)
+		return obj.Personnel, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3428,6 +3555,41 @@ func (ec *executionContext) _Project_personnel(ctx context.Context, field graphq
 	res := resTmp.([]*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Project_slug(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -3457,9 +3619,9 @@ func (ec *executionContext) _Project_createdAt(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Project_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
@@ -3489,9 +3651,9 @@ func (ec *executionContext) _Project_updatedAt(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectDetails_id(ctx context.Context, field graphql.CollectedField, obj *model.ProjectDetails) (ret graphql.Marshaler) {
@@ -3524,9 +3686,9 @@ func (ec *executionContext) _ProjectDetails_id(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectDetails_name(ctx context.Context, field graphql.CollectedField, obj *model.ProjectDetails) (ret graphql.Marshaler) {
@@ -3696,9 +3858,9 @@ func (ec *executionContext) _ProjectListItem_id(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ProjectListItem_name(ctx context.Context, field graphql.CollectedField, obj *model.ProjectListItem) (ret graphql.Marshaler) {
@@ -3833,9 +3995,9 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.User)
+	res := resTmp.([]*model.UserDetails)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_userDetails(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3863,11 +4025,14 @@ func (ec *executionContext) _Query_userDetails(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserDetails)
+	res := resTmp.([]*model.UserDetailsShort)
 	fc.Result = res
-	return ec.marshalOUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
+	return ec.marshalNUserDetailsShort2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3895,7 +4060,7 @@ func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserByID(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetUserByID(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3907,9 +4072,9 @@ func (ec *executionContext) _Query_getUserById(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.UserDetails)
 	fc.Result = res
-	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_projectListItems(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3972,7 +4137,7 @@ func (ec *executionContext) _Query_getProjectById(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetProjectByID(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetProjectByID(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4091,7 +4256,7 @@ func (ec *executionContext) _Query_meetingById(ctx context.Context, field graphq
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().MeetingByID(rctx, args["id"].(string))
+		return ec.resolvers.Query().MeetingByID(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4286,9 +4451,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_firstName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4391,9 +4556,9 @@ func (ec *executionContext) _UserDetails_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserDetails_firstName(ctx context.Context, field graphql.CollectedField, obj *model.UserDetails) (ret graphql.Marshaler) {
@@ -4510,6 +4675,178 @@ func (ec *executionContext) _UserDetails_assignedProjects(ctx context.Context, f
 	}()
 	fc := &graphql.FieldContext{
 		Object:     "UserDetails",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AssignedProjects, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Project)
+	fc.Result = res
+	return ec.marshalOProject2ᚕᚖqaplagqlᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetailsShort_id(ctx context.Context, field graphql.CollectedField, obj *model.UserDetailsShort) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetailsShort",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetailsShort_firstName(ctx context.Context, field graphql.CollectedField, obj *model.UserDetailsShort) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetailsShort",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FirstName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetailsShort_lastName(ctx context.Context, field graphql.CollectedField, obj *model.UserDetailsShort) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetailsShort",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetailsShort_email(ctx context.Context, field graphql.CollectedField, obj *model.UserDetailsShort) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetailsShort",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserDetailsShort_assignedProjects(ctx context.Context, field graphql.CollectedField, obj *model.UserDetailsShort) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserDetailsShort",
 		Field:      field,
 		Args:       nil,
 		IsMethod:   false,
@@ -5668,7 +6005,7 @@ func (ec *executionContext) unmarshalInputMeetingItemInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5731,7 +6068,7 @@ func (ec *executionContext) unmarshalInputMeetingNoteInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.ID, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5786,7 +6123,7 @@ func (ec *executionContext) unmarshalInputMeetingNoteTagInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5912,7 +6249,7 @@ func (ec *executionContext) unmarshalInputNewProject(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalOString2string(ctx, v)
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5943,7 +6280,7 @@ func (ec *executionContext) unmarshalInputNewProjectMeeting(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectIDs"))
-			it.ProjectIDs, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			it.ProjectIDs, err = ec.unmarshalOInt2ᚕᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5971,6 +6308,45 @@ func (ec *executionContext) unmarshalInputNewProjectMeeting(ctx context.Context,
 
 func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj interface{}) (model.NewUser, error) {
 	var it model.NewUser
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "firstName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
+			it.FirstName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "lastName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastName"))
+			it.LastName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNewUserAuth(ctx context.Context, obj interface{}) (model.NewUserAuth, error) {
+	var it model.NewUserAuth
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -6021,7 +6397,7 @@ func (ec *executionContext) unmarshalInputNewUserMeeting(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("peopleIDs"))
-			it.PeopleIDs, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			it.PeopleIDs, err = ec.unmarshalOInt2ᚕᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6060,7 +6436,7 @@ func (ec *executionContext) unmarshalInputUpdateMeetingItemRequest(ctx context.C
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6068,7 +6444,7 @@ func (ec *executionContext) unmarshalInputUpdateMeetingItemRequest(ctx context.C
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personnelID"))
-			it.PersonnelID, err = ec.unmarshalNString2string(ctx, v)
+			it.PersonnelID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6123,7 +6499,7 @@ func (ec *executionContext) unmarshalInputUpdateProject(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6139,7 +6515,7 @@ func (ec *executionContext) unmarshalInputUpdateProject(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalOString2string(ctx, v)
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6162,7 +6538,7 @@ func (ec *executionContext) unmarshalInputUpdateUser(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6265,7 +6641,7 @@ func (ec *executionContext) unmarshalInputUpdatedPeopleMeetingDetails(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6281,7 +6657,7 @@ func (ec *executionContext) unmarshalInputUpdatedPeopleMeetingDetails(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("people"))
-			it.People, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			it.People, err = ec.unmarshalOInt2ᚕᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6438,8 +6814,8 @@ func (ec *executionContext) _MeetingItem(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "personnel":
-			out.Values[i] = ec._MeetingItem_personnel(ctx, field, obj)
+		case "personnelID":
+			out.Values[i] = ec._MeetingItem_personnelID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6521,13 +6897,13 @@ func (ec *executionContext) _MeetingNote(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "about":
-			out.Values[i] = ec._MeetingNote_about(ctx, field, obj)
+		case "aboutId":
+			out.Values[i] = ec._MeetingNote_aboutId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "author":
-			out.Values[i] = ec._MeetingNote_author(ctx, field, obj)
+		case "authorId":
+			out.Values[i] = ec._MeetingNote_authorId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6608,6 +6984,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createUser":
 			out.Values[i] = ec._Mutation_createUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createAuth":
+			out.Values[i] = ec._Mutation_createAuth(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6732,29 +7113,25 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Project_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "name":
 			out.Values[i] = ec._Project_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "description":
 			out.Values[i] = ec._Project_description(ctx, field, obj)
 		case "personnel":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Project_personnel(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
+			out.Values[i] = ec._Project_personnel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._Project_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._Project_createdAt(ctx, field, obj)
 		case "updatedAt":
@@ -6891,6 +7268,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userDetails(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "getUserById":
@@ -7090,6 +7470,50 @@ func (ec *executionContext) _UserDetails(ctx context.Context, sel ast.SelectionS
 			}
 		case "assignedProjects":
 			out.Values[i] = ec._UserDetails_assignedProjects(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var userDetailsShortImplementors = []string{"UserDetailsShort"}
+
+func (ec *executionContext) _UserDetailsShort(ctx context.Context, sel ast.SelectionSet, obj *model.UserDetailsShort) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userDetailsShortImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserDetailsShort")
+		case "id":
+			out.Values[i] = ec._UserDetailsShort_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "firstName":
+			out.Values[i] = ec._UserDetailsShort_firstName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lastName":
+			out.Values[i] = ec._UserDetailsShort_lastName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "email":
+			out.Values[i] = ec._UserDetailsShort_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "assignedProjects":
+			out.Values[i] = ec._UserDetailsShort_assignedProjects(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7366,21 +7790,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7567,6 +7976,16 @@ func (ec *executionContext) unmarshalNNewProjectMeeting2qaplagqlᚋgraphᚋmodel
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNNewUser2qaplagqlᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
+	res, err := ec.unmarshalInputNewUser(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewUserAuth2qaplagqlᚋgraphᚋmodelᚐNewUserAuth(ctx context.Context, v interface{}) (model.NewUserAuth, error) {
+	res, err := ec.unmarshalInputNewUserAuth(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNNewUserMeeting2qaplagqlᚋgraphᚋmodelᚐNewUserMeeting(ctx context.Context, v interface{}) (model.NewUserMeeting, error) {
 	res, err := ec.unmarshalInputNewUserMeeting(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7744,44 +8163,6 @@ func (ec *executionContext) marshalNUser2qaplagqlᚋgraphᚋmodelᚐUser(ctx con
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalNUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7840,6 +8221,44 @@ func (ec *executionContext) marshalNUserDetails2qaplagqlᚋgraphᚋmodelᚐUserD
 	return ec._UserDetails(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetails) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7848,6 +8267,44 @@ func (ec *executionContext) marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUs
 		return graphql.Null
 	}
 	return ec._UserDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserDetailsShort2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetailsShort) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -8129,6 +8586,57 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚕᚖint(ctx context.Context, v interface{}) ([]*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*int, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOInt2ᚖint(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOInt2ᚕᚖint(ctx context.Context, sel ast.SelectionSet, v []*int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOInt2ᚖint(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
 }
 
 func (ec *executionContext) marshalOMeetingDetails2ᚖqaplagqlᚋgraphᚋmodelᚐMeetingDetails(ctx context.Context, sel ast.SelectionSet, v *model.MeetingDetails) graphql.Marshaler {
@@ -8417,42 +8925,6 @@ func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.S
 	return graphql.MarshalString(v)
 }
 
-func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]*string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -8468,13 +8940,19 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
 	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	return graphql.MarshalTime(v)
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalTime(*v)
 }
 
 func (ec *executionContext) marshalOUser2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
@@ -8525,52 +9003,18 @@ func (ec *executionContext) marshalOUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx 
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserDetails2ᚕᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v []*model.UserDetails) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx context.Context, sel ast.SelectionSet, v *model.UserDetails) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserDetailsShort2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetailsShort(ctx context.Context, sel ast.SelectionSet, v *model.UserDetailsShort) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserDetailsShort(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

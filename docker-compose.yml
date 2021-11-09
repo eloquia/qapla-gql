@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:12-alpine
+    container_name: qapla_postgres
+    environment:
+      POSTGRES_DB: ${QAPLA_POSTGRES_DB_NAME}
+      POSTGRES_USER: ${QAPLA_POSTGRES_DB_USER}
+      POSTGRES_PASSWORD: ${QAPLA_POSTGRES_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - fullstack
+    volumes:
+      - qapla_data:/var/lib/postgresql/data1
+
+  api:
+    build: .
+    container_name: qapla
+    environment:
+      DB_USERNAME: ${QAPLA_POSTGRES_DB_USER}
+      DB_PASSWORD: ${QAPLA_POSTGRES_DB_PASSWORD}
+      DB_HOST: "db"
+      DB_NAME: ${QAPLA_POSTGRES_DB_NAME}
+      DB_PORT: "5432"
+      SSL_MODE: "disable"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - fullstack
+
+volumes:
+  qapla_data:
+
+networks:
+  fullstack:
+    driver: bridge
