@@ -52,7 +52,17 @@ func (ps *ProjectServiceSql) GetById(ctx context.Context, id int) (*model.Projec
 func (ps *ProjectServiceSql) GetProjectDetails(ctx context.Context, slug string) (*model.ProjectDetails, error) {
 	log.Printf("[DEBUG] GetProjectDetails")
 
-	panic("Not yet implemented")
+	if slug == "" {
+		return &model.ProjectDetails{}, errors.New("Slug is required")
+	}
+
+	projectModel, err := ps.queries.GetProjectBySlug(ctx, slug)
+	if err != nil {
+		return &model.ProjectDetails{}, err
+	}
+	projectDomain := ProjectToDetailsDomain(projectModel)
+
+	return projectDomain, nil
 }
 
 func (ps *ProjectServiceSql) AddUserToProject(ctx context.Context, userId int, projectId int) (*model.User, error) {

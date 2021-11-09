@@ -18,3 +18,12 @@ func ProjectToDomain(projectModel CoreQaplaProject) *model.Project {
 		Slug:        projectModel.Slug,
 	}
 }
+
+func ProjectToDetailsDomain(projectModel CoreQaplaProject) *model.ProjectDetails {
+	return &model.ProjectDetails{
+		ID:          int(projectModel.ProjectID),
+		Name:        projectModel.ProjectName,
+		Description: projectModel.ProjectDesc.String,
+		Slug:        projectModel.Slug,
+	}
+}
