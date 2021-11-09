@@ -3,6 +3,7 @@ package seequell
 import (
 	"context"
 	"database/sql"
+	"log"
 	"qaplagql/graph/model"
 )
 
@@ -47,7 +48,20 @@ func (ps *ProjectServiceSql) GetAssignedProjects(ctx context.Context, userID int
 }
 
 func (ps *ProjectServiceSql) GetProjectListItems(ctx context.Context) ([]*model.ProjectListItem, error) {
-	panic("Not yet implemented")
+	log.Printf("[DEBUG] GetProjectListItems")
+
+	projectModels, err := ps.queries.GetAllProjects(ctx)
+	if err != nil {
+		return []*model.ProjectListItem{}, err
+	}
+
+	var projects []*model.ProjectListItem
+	for i := 0; i < len(projectModels); i++ {
+		project := ProjectToListItemDomain(projectModels[i])
+		projects = append(projects, project)
+	}
+
+	return projects, nil
 }
 
 func (ps *ProjectServiceSql) GetAllProjectDetails(ctx context.Context) ([]*model.ProjectDetails, error) {

@@ -33,7 +33,7 @@ INSERT INTO core_qapla.projects
   (project_name, project_desc)
 VALUES
   ($1, $2)
-RETURNING project_id, project_name, project_desc, created_at, updated_at
+RETURNING project_id, project_name, project_desc, created_at, updated_at, slug
 `
 
 type CreateProjectParams struct {
@@ -50,8 +50,44 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (C
 		&i.ProjectDesc,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Slug,
 	)
 	return i, err
+}
+
+const getAllProjects = `-- name: GetAllProjects :many
+SELECT project_id, project_name, project_desc, created_at, updated_at, slug FROM core_qapla.projects
+ORDER BY project_name
+`
+
+func (q *Queries) GetAllProjects(ctx context.Context) ([]CoreQaplaProject, error) {
+	rows, err := q.query(ctx, q.getAllProjectsStmt, getAllProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CoreQaplaProject{}
+	for rows.Next() {
+		var i CoreQaplaProject
+		if err := rows.Scan(
+			&i.ProjectID,
+			&i.ProjectName,
+			&i.ProjectDesc,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Slug,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateProject = `-- name: UpdateProject :one
@@ -59,7 +95,7 @@ UPDATE core_qapla.projects
 SET project_name = $2,
     project_desc = $3
 WHERE project_id = $1
-RETURNING project_id, project_name, project_desc, created_at, updated_at
+RETURNING project_id, project_name, project_desc, created_at, updated_at, slug
 `
 
 type UpdateProjectParams struct {
@@ -77,6 +113,7 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (C
 		&i.ProjectDesc,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Slug,
 	)
 	return i, err
 }

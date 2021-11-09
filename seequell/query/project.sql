@@ -18,3 +18,7 @@ INSERT INTO core_qapla.project_user
 VALUES
   ($1, $2)
 RETURNING *;
+
+-- name: GetAllProjects :many
+SELECT * FROM core_qapla.projects
+ORDER BY project_name;

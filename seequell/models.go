@@ -20,11 +20,7 @@ type CoreQaplaProject struct {
 	ProjectDesc sql.NullString `json:"project_desc"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
-}
-
-type CoreQaplaProjectUser struct {
-	ProjectID int64 `json:"project_id"`
-	UserID    int64 `json:"user_id"`
+	Slug        string         `json:"slug"`
 }
 
 type CoreQaplaProjectUser struct {
