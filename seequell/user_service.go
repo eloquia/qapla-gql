@@ -20,7 +20,7 @@ func NewUserService(client *sql.DB, queries *Queries) *UserServiceSql {
 }
 
 func (us *UserServiceSql) CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetails, error) {
-	log.Print("[LOG] CreateUser")
+	log.Printf("[DEBUG] CreateUsers")
 
 	arg := CreateUserParams{
 		FirstName: input.FirstName,
@@ -39,22 +39,31 @@ func (us *UserServiceSql) CreateUser(ctx context.Context, input model.NewUser) (
 }
 
 func (us *UserServiceSql) GetById(ctx context.Context, id int) (*model.UserDetails, error) {
-	panic("Not yet implemented")
-}
-
-func (userService *UserServiceSql) UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error) {
-	panic("Not yet implemented")
-}
-
-func (userService *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetails, error) {
 	log.Printf("[DEBUG] GetAll Users")
 
-	modelUsers, err := userService.queries.ListUsers(ctx)
+	id64 := int64(id)
+
+	modelUser, err := us.queries.GetUser(ctx, id64)
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+
+	domainUser := UserToDomain(modelUser)
+
+	return domainUser, nil
+}
+
+func (us *UserServiceSql) UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error) {
+	panic("Not yet implemented")
+}
+
+func (us *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetails, error) {
+	log.Printf("[DEBUG] GetAll Users")
+
+	modelUsers, err := us.queries.ListUsers(ctx)
 	if err != nil {
 		return []*model.UserDetails{}, err
 	}
-
-	log.Printf("GetAll Users %+v", modelUsers)
 
 	var domainUsers []*model.UserDetails
 	for _, modelUser := range modelUsers {
@@ -65,7 +74,7 @@ func (userService *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDet
 	return domainUsers, nil
 }
 
-func (userService *UserServiceSql) GetAllUserDetails(ctx context.Context) ([]*model.UserDetails, error) {
+func (us *UserServiceSql) GetAllUserDetails(ctx context.Context) ([]*model.UserDetails, error) {
 	panic("Not yet implemented")
 }
 

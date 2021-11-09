@@ -8,9 +8,15 @@ To set up the initial database:
 
 ## Initial Schema
 
-1. Create a `SCHEMA` for `core_qapla`
+The initial schema should be listed in the first migration file starting with `000001_*`.
 
-## Initial Roles
+## Initial Role
 
 1. Create a user (login by default) named `qapla_user` with some kind of password
-2. Run `GRANT ALl PRIVILEGES ON ALL TABLES IN SCHEMA core_qapla TO qapla_user`
+2. Run `GRANT CONNECT ON DATABASE test_qapla TO qapla_user;`
+3. Run `GRANT USAGE ON SCHEMA core_qapla TO my_user;` or whatever the schema name is
+4. Run `GRANT ALl PRIVILEGES ON ALL TABLES IN SCHEMA core_qapla TO qapla_user;`
+
+## Running Migration in Dockerized Postgres via `psql`
+
+After using `docker cp` to copy over the migration file, run `docker exec` to connect to the Postgres container and run `\i \path\TO\file_name.sql` to run the DML in the copied file.
