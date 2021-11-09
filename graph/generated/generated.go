@@ -106,6 +106,7 @@ type ComplexityRoot struct {
 		UpdateMeetingItem    func(childComplexity int, input model.UpdateMeetingItemRequest) int
 		UpdateProject        func(childComplexity int, input model.UpdateProject) int
 		UpdateUser           func(childComplexity int, input model.UpdateUser) int
+		UpdateUserDetails    func(childComplexity int, input model.UserDetailsInput) int
 		UpdateUserMeeting    func(childComplexity int, input model.UpdatedPeopleMeetingDetails) int
 	}
 
@@ -189,6 +190,7 @@ type MutationResolver interface {
 	CreateAuth(ctx context.Context, input model.NewUserAuth) (*model.UserDetailsShort, error)
 	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
 	UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error)
+	UpdateUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
 	CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error)
 	UpdateProject(ctx context.Context, input model.UpdateProject) (*model.Project, error)
 	AssignUserToProject(ctx context.Context, userID int, projectID int) (*model.User, error)
@@ -580,6 +582,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateUser(childComplexity, args["input"].(model.UpdateUser)), true
+
+	case "Mutation.updateUserDetails":
+		if e.complexity.Mutation.UpdateUserDetails == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateUserDetails_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateUserDetails(childComplexity, args["input"].(model.UserDetailsInput)), true
 
 	case "Mutation.updateUserMeeting":
 		if e.complexity.Mutation.UpdateUserMeeting == nil {
@@ -1279,6 +1293,7 @@ type Mutation {
   createAuth(input: NewUserAuth!): UserDetailsShort!
   addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
+  updateUserDetails(input: UserDetailsInput!): UserDetails!
 
   # # #
   # # # Project
@@ -1497,6 +1512,21 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNUpdateProject2qaplagqlᚋgraphᚋmodelᚐUpdateProject(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateUserDetails_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UserDetailsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUserDetailsInput2qaplagqlᚋgraphᚋmodelᚐUserDetailsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2940,6 +2970,48 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖqaplagqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateUserDetails(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateUserDetails_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateUserDetails(rctx, args["input"].(model.UserDetailsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserDetails)
+	fc.Result = res
+	return ec.marshalNUserDetails2ᚖqaplagqlᚋgraphᚋmodelᚐUserDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7209,6 +7281,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateUser":
 			out.Values[i] = ec._Mutation_updateUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateUserDetails":
+			out.Values[i] = ec._Mutation_updateUserDetails(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

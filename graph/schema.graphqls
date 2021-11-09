@@ -240,6 +240,7 @@ type Mutation {
   createAuth(input: NewUserAuth!): UserDetailsShort!
   addUserDetails(input: UserDetailsInput!): UserDetails!
   updateUser(input: UpdateUser!): User!
+  updateUserDetails(input: UserDetailsInput!): UserDetails!
 
   # # #
   # # # Project

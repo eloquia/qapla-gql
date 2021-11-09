@@ -55,7 +55,32 @@ func (us *UserServiceSql) GetById(ctx context.Context, id int) (*model.UserDetai
 }
 
 func (us *UserServiceSql) UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error) {
-	panic("Not yet implemented")
+	log.Printf("[DEBUG] UpdateUser")
+
+	// see if user with ID exists
+	isExists, err := us.queries.UserExists(ctx, int64(input.ID))
+	if err != nil {
+		return &model.User{}, err
+	}
+	if !isExists {
+		return &model.User{}, errors.New("Cannot update user if user ID does not exist")
+	}
+
+	params := UpdateUserParams{
+		UserID:    int64(input.ID),
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+	}
+
+	res, err := us.queries.UpdateUser(ctx, params)
+	if err != nil {
+		return &model.User{}, err
+	}
+
+	userDomain := ToUserDomain(res)
+
+	return userDomain, nil
 }
 
 func (us *UserServiceSql) GetAll(ctx context.Context) ([]*model.UserDetailsShort, error) {

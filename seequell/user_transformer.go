@@ -22,3 +22,11 @@ func UserToDetailedDomain(user GetUserDetailsRow) *model.UserDetails {
 func ToUserDetailsDomain(userDetails CoreQaplaUserDetail) *model.UserDetails {
 	return &model.UserDetails{}
 }
+
+func ToUserDomain(userModel CoreQaplaUser) *model.User {
+	return &model.User{
+		ID:        int(userModel.UserID),
+		FirstName: userModel.FirstName,
+		LastName:  userModel.LastName,
+	}
+}

@@ -27,6 +27,10 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 	return r.UserService.UpdateUser(ctx, &input)
 }
 
+func (r *mutationResolver) UpdateUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.NewProject) (*model.Project, error) {
 	return r.ProjectService.CreateProject(ctx, &input)
 }
