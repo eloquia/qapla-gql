@@ -6,11 +6,20 @@ import (
 )
 
 type UserService interface {
+	// Create
 	CreateUser(ctx context.Context, input model.NewUser) (*model.UserDetailsShort, error)
+
+	// Read
 	GetAll(ctx context.Context) ([]*model.UserDetailsShort, error)
 	GetById(ctx context.Context, id int) (*model.UserDetails, error)
-	UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error)
 	GetAllShortUserDetails(ctx context.Context) ([]*model.UserDetailsShort, error)
-	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
 	IsEmailInUse(ctx context.Context, email string) (bool, error)
+
+	// Update
+	UpdateUser(ctx context.Context, input *model.UpdateUser) (*model.User, error)
+	AddUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
+	UpdateUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error)
+
+	// Delete
+
 }

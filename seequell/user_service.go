@@ -163,3 +163,67 @@ func (us *UserServiceSql) IsEmailInUse(ctx context.Context, email string) (bool,
 
 	return isInUse, nil
 }
+
+func (us *UserServiceSql) UpdateUserDetails(ctx context.Context, input model.UserDetailsInput) (*model.UserDetails, error) {
+	log.Printf("[DEBUG] UpdateUserDetails")
+
+	// Check if user and details exist
+	userExists, err := us.queries.UserExists(ctx, int64(input.UserID))
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+	if !userExists {
+		return &model.UserDetails{}, errors.New("User with ID does not exist")
+	}
+
+	detailsExist, err := us.queries.UserDetailsExistByUserId(ctx, int64(input.UserID))
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+	if !detailsExist {
+		return &model.UserDetails{}, errors.New("User with ID does not have any details")
+	}
+
+	// get user detalis id
+	userDetailId, err := us.queries.UserDetailsByUserId(ctx, int64(input.UserID))
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+
+	updateParams := UpdateUserDetailsParams{
+		UserDetailID: userDetailId,
+		MiddleName: sql.NullString{
+			Valid:  true,
+			String: *input.MiddleName,
+		},
+		GoesBy: sql.NullString{
+			Valid:  true,
+			String: *input.GoesBy,
+		},
+		Gender: sql.NullString{
+			Valid:  true,
+			String: *input.Gender,
+		},
+		Ethnicity: sql.NullString{
+			Valid:  true,
+			String: *input.Ethnicity,
+		},
+		Position: sql.NullString{
+			Valid:  true,
+			String: *input.Position,
+		},
+		Institution: sql.NullString{
+			Valid:  true,
+			String: *input.Institution,
+		},
+	}
+
+	res, err := us.queries.UpdateUserDetails(ctx, updateParams)
+	if err != nil {
+		return &model.UserDetails{}, err
+	}
+
+	userDetailDomain := UserDetailsToDomain(res, CoreQaplaUser{})
+
+	return userDetailDomain, nil
+}

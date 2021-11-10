@@ -288,6 +288,30 @@ func (q *Queries) UpdateUserDetails(ctx context.Context, arg UpdateUserDetailsPa
 	return i, err
 }
 
+const userDetailsByUserId = `-- name: UserDetailsByUserId :one
+SELECT user_detail_id FROM core_qapla.user_details WHERE user_id = $1
+`
+
+func (q *Queries) UserDetailsByUserId(ctx context.Context, userID int64) (int64, error) {
+	row := q.queryRow(ctx, q.userDetailsByUserIdStmt, userDetailsByUserId, userID)
+	var user_detail_id int64
+	err := row.Scan(&user_detail_id)
+	return user_detail_id, err
+}
+
+const userDetailsExistByUserId = `-- name: UserDetailsExistByUserId :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.user_details WHERE user_id = $1
+)
+`
+
+func (q *Queries) UserDetailsExistByUserId(ctx context.Context, userID int64) (bool, error) {
+	row := q.queryRow(ctx, q.userDetailsExistByUserIdStmt, userDetailsExistByUserId, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const userExists = `-- name: UserExists :one
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE user_id = $1

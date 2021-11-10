@@ -73,6 +73,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateUserDetailsStmt, err = db.PrepareContext(ctx, updateUserDetails); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserDetails: %w", err)
 	}
+	if q.userDetailsByUserIdStmt, err = db.PrepareContext(ctx, userDetailsByUserId); err != nil {
+		return nil, fmt.Errorf("error preparing query UserDetailsByUserId: %w", err)
+	}
+	if q.userDetailsExistByUserIdStmt, err = db.PrepareContext(ctx, userDetailsExistByUserId); err != nil {
+		return nil, fmt.Errorf("error preparing query UserDetailsExistByUserId: %w", err)
+	}
 	if q.userExistsStmt, err = db.PrepareContext(ctx, userExists); err != nil {
 		return nil, fmt.Errorf("error preparing query UserExists: %w", err)
 	}
@@ -166,6 +172,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateUserDetailsStmt: %w", cerr)
 		}
 	}
+	if q.userDetailsByUserIdStmt != nil {
+		if cerr := q.userDetailsByUserIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing userDetailsByUserIdStmt: %w", cerr)
+		}
+	}
+	if q.userDetailsExistByUserIdStmt != nil {
+		if cerr := q.userDetailsExistByUserIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing userDetailsExistByUserIdStmt: %w", cerr)
+		}
+	}
 	if q.userExistsStmt != nil {
 		if cerr := q.userExistsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing userExistsStmt: %w", cerr)
@@ -208,49 +224,53 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                      DBTX
-	tx                      *sql.Tx
-	addUserDetailsStmt      *sql.Stmt
-	assignUserToProjectStmt *sql.Stmt
-	createProjectStmt       *sql.Stmt
-	createUserStmt          *sql.Stmt
-	deleteUserStmt          *sql.Stmt
-	getAllProjectsStmt      *sql.Stmt
-	getProjectByIdStmt      *sql.Stmt
-	getProjectBySlugStmt    *sql.Stmt
-	getUserStmt             *sql.Stmt
-	getUserDetailsStmt      *sql.Stmt
-	isEmailInUseStmt        *sql.Stmt
-	listUsersStmt           *sql.Stmt
-	projectExistsByIdStmt   *sql.Stmt
-	projectExistsBySlugStmt *sql.Stmt
-	updateProjectStmt       *sql.Stmt
-	updateUserStmt          *sql.Stmt
-	updateUserDetailsStmt   *sql.Stmt
-	userExistsStmt          *sql.Stmt
+	db                           DBTX
+	tx                           *sql.Tx
+	addUserDetailsStmt           *sql.Stmt
+	assignUserToProjectStmt      *sql.Stmt
+	createProjectStmt            *sql.Stmt
+	createUserStmt               *sql.Stmt
+	deleteUserStmt               *sql.Stmt
+	getAllProjectsStmt           *sql.Stmt
+	getProjectByIdStmt           *sql.Stmt
+	getProjectBySlugStmt         *sql.Stmt
+	getUserStmt                  *sql.Stmt
+	getUserDetailsStmt           *sql.Stmt
+	isEmailInUseStmt             *sql.Stmt
+	listUsersStmt                *sql.Stmt
+	projectExistsByIdStmt        *sql.Stmt
+	projectExistsBySlugStmt      *sql.Stmt
+	updateProjectStmt            *sql.Stmt
+	updateUserStmt               *sql.Stmt
+	updateUserDetailsStmt        *sql.Stmt
+	userDetailsByUserIdStmt      *sql.Stmt
+	userDetailsExistByUserIdStmt *sql.Stmt
+	userExistsStmt               *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                      tx,
-		tx:                      tx,
-		addUserDetailsStmt:      q.addUserDetailsStmt,
-		assignUserToProjectStmt: q.assignUserToProjectStmt,
-		createProjectStmt:       q.createProjectStmt,
-		createUserStmt:          q.createUserStmt,
-		deleteUserStmt:          q.deleteUserStmt,
-		getAllProjectsStmt:      q.getAllProjectsStmt,
-		getProjectByIdStmt:      q.getProjectByIdStmt,
-		getProjectBySlugStmt:    q.getProjectBySlugStmt,
-		getUserStmt:             q.getUserStmt,
-		getUserDetailsStmt:      q.getUserDetailsStmt,
-		isEmailInUseStmt:        q.isEmailInUseStmt,
-		listUsersStmt:           q.listUsersStmt,
-		projectExistsByIdStmt:   q.projectExistsByIdStmt,
-		projectExistsBySlugStmt: q.projectExistsBySlugStmt,
-		updateProjectStmt:       q.updateProjectStmt,
-		updateUserStmt:          q.updateUserStmt,
-		updateUserDetailsStmt:   q.updateUserDetailsStmt,
-		userExistsStmt:          q.userExistsStmt,
+		db:                           tx,
+		tx:                           tx,
+		addUserDetailsStmt:           q.addUserDetailsStmt,
+		assignUserToProjectStmt:      q.assignUserToProjectStmt,
+		createProjectStmt:            q.createProjectStmt,
+		createUserStmt:               q.createUserStmt,
+		deleteUserStmt:               q.deleteUserStmt,
+		getAllProjectsStmt:           q.getAllProjectsStmt,
+		getProjectByIdStmt:           q.getProjectByIdStmt,
+		getProjectBySlugStmt:         q.getProjectBySlugStmt,
+		getUserStmt:                  q.getUserStmt,
+		getUserDetailsStmt:           q.getUserDetailsStmt,
+		isEmailInUseStmt:             q.isEmailInUseStmt,
+		listUsersStmt:                q.listUsersStmt,
+		projectExistsByIdStmt:        q.projectExistsByIdStmt,
+		projectExistsBySlugStmt:      q.projectExistsBySlugStmt,
+		updateProjectStmt:            q.updateProjectStmt,
+		updateUserStmt:               q.updateUserStmt,
+		updateUserDetailsStmt:        q.updateUserDetailsStmt,
+		userDetailsByUserIdStmt:      q.userDetailsByUserIdStmt,
+		userDetailsExistByUserIdStmt: q.userDetailsExistByUserIdStmt,
+		userExistsStmt:               q.userExistsStmt,
 	}
 }

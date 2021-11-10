@@ -47,6 +47,14 @@ SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE user_id = $1
 );
 
+-- name: UserDetailsExistByUserId :one
+SELECT EXISTS (
+  SELECT 1 FROM core_qapla.user_details WHERE user_id = $1
+);
+
+-- name: UserDetailsByUserId :one
+SELECT user_detail_id FROM core_qapla.user_details WHERE user_id = $1;
+
 -- name: IsEmailInUse :one
 SELECT EXISTS (
   SELECT 1 FROM core_qapla.users WHERE email = $1
